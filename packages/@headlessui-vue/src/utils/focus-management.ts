@@ -2,8 +2,15 @@ import { nextTick } from 'vue'
 import { match } from './match'
 import { getOwnerDocument } from './owner'
 
-// Credit:
-//  - https://stackoverflow.com/a/30753870
+// =============================================================================
+// 可聚焦元素选择器
+// 与React版本完全相同的实现
+// =============================================================================
+
+/**
+ * 可聚焦元素的CSS选择器列表
+ * 来源: https://stackoverflow.com/a/30753870
+ */
 export let focusableSelector = [
   '[contentEditable=true]',
   '[tabindex]',
@@ -17,34 +24,40 @@ export let focusableSelector = [
 ]
   .map(
     process.env.NODE_ENV === 'test'
-      ? // TODO: Remove this once JSDOM fixes the issue where an element that is
-        // "hidden" can be the document.activeElement, because this is not possible
-        // in real browsers.
+      ? // JSDOM特殊处理
         (selector) => `${selector}:not([tabindex='-1']):not([style*='display: none'])`
       : (selector) => `${selector}:not([tabindex='-1'])`
   )
   .join(',')
 
+// =============================================================================
+// 焦点管理枚举
+// 与React版本基本相同，但不包含AutoFocus特性
+// =============================================================================
+
+/**
+ * Focus枚举
+ * 注意: Vue版本不包含AutoFocus特性，因为Vue有自己的autofocus指令
+ */
 export enum Focus {
-  /** Focus the first non-disabled element */
+  /** 聚焦第一个非禁用元素 */
   First = 1 << 0,
-
-  /** Focus the previous non-disabled element */
+  /** 聚焦上一个非禁用元素 */
   Previous = 1 << 1,
-
-  /** Focus the next non-disabled element */
+  /** 聚焦下一个非禁用元素 */
   Next = 1 << 2,
-
-  /** Focus the last non-disabled element */
+  /** 聚焦最后一个非禁用元素 */
   Last = 1 << 3,
-
-  /** Wrap tab around */
+  /** Tab键循环包装 */
   WrapAround = 1 << 4,
-
-  /** Prevent scrolling the focusable elements into view */
+  /** 阻止将可聚焦元素滚动到视图中 */
   NoScroll = 1 << 5,
 }
 
+/**
+ * FocusResult枚举
+ * 与React版本完全相同
+ */
 export enum FocusResult {
   Error,
   Overflow,
@@ -52,51 +65,76 @@ export enum FocusResult {
   Underflow,
 }
 
+/**
+ * Direction枚举
+ * 与React版本完全相同
+ */
 enum Direction {
   Previous = -1,
   Next = 1,
 }
 
+// =============================================================================
+// 焦点元素操作
+// 基本功能与React版本相同，但使用Vue的工具函数
+// =============================================================================
+
+/**
+ * 获取容器内所有可聚焦元素
+ * 实现与React版本相同，但用于Vue组件环境
+ */
 export function getFocusableElements(container: HTMLElement | null = document.body) {
   if (container == null) return []
   return Array.from(container.querySelectorAll<HTMLElement>(focusableSelector)).sort(
-    // We want to move `:tabindex="0"` to the end of the list, this is what the browser does as well.
     (a, z) =>
       Math.sign((a.tabIndex || Number.MAX_SAFE_INTEGER) - (z.tabIndex || Number.MAX_SAFE_INTEGER))
   )
 }
 
+/**
+ * FocusableMode枚举
+ * 与React版本完全相同
+ */
 export enum FocusableMode {
-  /** The element itself must be focusable. */
+  /** 元素本身必须是可聚焦的 */
   Strict,
-
-  /** The element should be inside of a focusable element. */
+  /** 元素应该在可聚焦元素内部 */
   Loose,
 }
 
+/**
+ * 判断元素是否可聚焦
+ * 实现与React版本相同
+ */
 export function isFocusableElement(
   element: HTMLElement,
   mode: FocusableMode = FocusableMode.Strict
 ) {
   if (element === getOwnerDocument(element)?.body) return false
-
   return match(mode, {
     [FocusableMode.Strict]() {
       return element.matches(focusableSelector)
     },
     [FocusableMode.Loose]() {
       let next: HTMLElement | null = element
-
       while (next !== null) {
         if (next.matches(focusableSelector)) return true
         next = next.parentElement
       }
-
       return false
     },
   })
 }
 
+// =============================================================================
+// 焦点恢复处理
+// 主要区别：使用Vue的nextTick而不是React的requestAnimationFrame
+// =============================================================================
+
+/**
+ * 必要时恢复焦点
+ * 区别: 使用Vue的nextTick代替React的requestAnimationFrame
+ */
 export function restoreFocusIfNecessary(element: HTMLElement | null) {
   let ownerDocument = getOwnerDocument(element)
   nextTick(() => {
@@ -109,17 +147,20 @@ export function restoreFocusIfNecessary(element: HTMLElement | null) {
   })
 }
 
-// The method of triggering an action, this is used to determine how we should
-// restore focus after an action has been performed.
+/**
+ * 激活方法枚举
+ * 与React版本完全相同
+ */
 enum ActivationMethod {
-  /* If the action was triggered by a keyboard event. */
   Keyboard = 0,
-
-  /* If the action was triggered by a mouse / pointer / ... event.*/
   Mouse = 1,
 }
 
-// We want to be able to set and remove the `data-headlessui-mouse` attribute on the `html` element.
+// =============================================================================
+// 焦点可见性处理
+// 与React版本完全相同的实现
+// =============================================================================
+
 if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   document.addEventListener(
     'keydown',
@@ -127,7 +168,6 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
       if (event.metaKey || event.altKey || event.ctrlKey) {
         return
       }
-
       document.documentElement.dataset.headlessuiFocusVisible = ''
     },
     true
@@ -136,13 +176,9 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   document.addEventListener(
     'click',
     (event) => {
-      // Event originated from an actual mouse click
       if (event.detail === ActivationMethod.Mouse) {
         delete document.documentElement.dataset.headlessuiFocusVisible
-      }
-
-      // Event originated from a keyboard event that triggered the `click` event
-      else if (event.detail === ActivationMethod.Keyboard) {
+      } else if (event.detail === ActivationMethod.Keyboard) {
         document.documentElement.dataset.headlessuiFocusVisible = ''
       }
     },
@@ -150,18 +186,36 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   )
 }
 
+/**
+ * 设置元素焦点
+ * 与React版本完全相同
+ */
 export function focusElement(element: HTMLElement | null) {
   element?.focus({ preventScroll: true })
 }
 
-// https://developer.mozilla.org/en-US/docs/Web/API/HTMLInputElement/select
+// =============================================================================
+// 文本选择处理
+// 与React版本完全相同的实现
+// =============================================================================
+
 let selectableSelector = ['textarea', 'input'].join(',')
+
 function isSelectableElement(
   element: Element | null
 ): element is HTMLInputElement | HTMLTextAreaElement {
   return element?.matches?.(selectableSelector) ?? false
 }
 
+// =============================================================================
+// DOM节点排序
+// 基本相同，但类型处理略有不同以适应Vue
+// =============================================================================
+
+/**
+ * 按DOM顺序排序节点
+ * 区别: 类型转换使用unknown作为中间类型，以适应Vue的类型系统
+ */
 export function sortByDomNode<T>(
   nodes: T[],
   resolveKey: (item: T) => HTMLElement | null = (i) => i as unknown as HTMLElement | null
@@ -169,21 +223,33 @@ export function sortByDomNode<T>(
   return nodes.slice().sort((aItem, zItem) => {
     let a = resolveKey(aItem)
     let z = resolveKey(zItem)
-
     if (a === null || z === null) return 0
-
     let position = a.compareDocumentPosition(z)
-
     if (position & Node.DOCUMENT_POSITION_FOLLOWING) return -1
     if (position & Node.DOCUMENT_POSITION_PRECEDING) return 1
     return 0
   })
 }
 
+// =============================================================================
+// 焦点移动
+// 基本相同，但简化了一些类型处理
+// =============================================================================
+
+/**
+ * 从当前元素移动焦点
+ * 与React版本完全相同
+ */
 export function focusFrom(current: HTMLElement | null, focus: Focus) {
   return focusIn(getFocusableElements(), focus, { relativeTo: current })
 }
 
+/**
+ * 在指定容器内移动焦点
+ * 区别: 
+ * 1. 简化了skipElements的类型(不处理Ref)
+ * 2. 文档获取逻辑略有调整
+ */
 export function focusIn(
   container: HTMLElement | HTMLElement[],
   focus: Focus,
@@ -193,6 +259,7 @@ export function focusIn(
     skipElements = [],
   }: Partial<{ sorted: boolean; relativeTo: HTMLElement | null; skipElements: HTMLElement[] }> = {}
 ) {
+  // Vue版本的文档获取逻辑略有不同
   let ownerDocument =
     (Array.isArray(container)
       ? container.length > 0
@@ -206,16 +273,17 @@ export function focusIn(
       : container
     : getFocusableElements(container)
 
+  // 简化的skipElements处理
   if (skipElements.length > 0 && elements.length > 1) {
     elements = elements.filter((x) => !skipElements.includes(x))
   }
 
   relativeTo = relativeTo ?? (ownerDocument.activeElement as HTMLElement)
 
+  // 以下逻辑与React版本完全相同
   let direction = (() => {
     if (focus & (Focus.First | Focus.Next)) return Direction.Next
     if (focus & (Focus.Previous | Focus.Last)) return Direction.Previous
-
     throw new Error('Missing Focus.First, Focus.Previous, Focus.Next or Focus.Last')
   })()
 
@@ -224,7 +292,6 @@ export function focusIn(
     if (focus & Focus.Previous) return Math.max(0, elements.indexOf(relativeTo)) - 1
     if (focus & Focus.Next) return Math.max(0, elements.indexOf(relativeTo)) + 1
     if (focus & Focus.Last) return elements.length - 1
-
     throw new Error('Missing Focus.First, Focus.Previous, Focus.Next or Focus.Last')
   })()
 
@@ -234,11 +301,9 @@ export function focusIn(
   let total = elements.length
   let next = undefined
   do {
-    // Guard against infinite loops
     if (offset >= total || offset + total <= 0) return FocusResult.Error
 
     let nextIdx = startIndex + offset
-
     if (focus & Focus.WrapAround) {
       nextIdx = (nextIdx + total) % total
     } else {
@@ -247,22 +312,10 @@ export function focusIn(
     }
 
     next = elements[nextIdx]
-
-    // Try the focus the next element, might not work if it is "hidden" to the user.
     next?.focus(focusOptions)
-
-    // Try the next one in line
     offset += direction
   } while (next !== ownerDocument.activeElement)
 
-  // By default if you <Tab> to a text input or a textarea, the browser will
-  // select all the text once the focus is inside these DOM Nodes. However,
-  // since we are manually moving focus this behaviour is not happening. This
-  // code will make sure that the text gets selected as-if you did it manually.
-  // Note: We only do this when going forward / backward. Not for the
-  // Focus.First or Focus.Last actions. This is similar to the `autoFocus`
-  // behaviour on an input where the input will get focus but won't be
-  // selected.
   if (focus & (Focus.Next | Focus.Previous) && isSelectableElement(next)) {
     next.select()
   }

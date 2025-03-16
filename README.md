@@ -5,16 +5,16 @@
 - [scripts/build.sh](/scripts/build.sh)
 
 ## 通用工具与辅助函数
-- [packages/@headlessui-react/src/utils/render.ts](/packages/@headlessui-react/src/utils/render.ts) (*)
-- [packages/@headlessui-vue/src/utils/render.ts](/packages/@headlessui-vue/src/utils/render.ts) (*)
-- [packages/@headlessui-react/src/utils/match.ts](/packages/@headlessui-react/src/utils/match.ts) (*)
-- [packages/@headlessui-vue/src/utils/match.ts](/packages/@headlessui-vue/src/utils/match.ts) (*)
-- [packages/@headlessui-react/src/utils/focus-management.ts](/packages/@headlessui-react/src/utils/focus-management.ts) (*)
-- [packages/@headlessui-vue/src/utils/focus-management.ts](/packages/@headlessui-vue/src/utils/focus-management.ts) (*)
+- [packages/@headlessui-react/src/utils/render.ts](/packages/@headlessui-react/src/utils/render.ts)
+- [packages/@headlessui-vue/src/utils/render.ts](/packages/@headlessui-vue/src/utils/render.ts)
+- [packages/@headlessui-react/src/utils/match.ts](/packages/@headlessui-react/src/utils/match.ts)
+- [packages/@headlessui-vue/src/utils/match.ts](/packages/@headlessui-vue/src/utils/match.ts)
+- [packages/@headlessui-react/src/utils/focus-management.ts](/packages/@headlessui-react/src/utils/focus-management.ts)
+- [packages/@headlessui-vue/src/utils/focus-management.ts](/packages/@headlessui-vue/src/utils/focus-management.ts)
 
 ## 核心钩子函数 - React版本
-- [packages/@headlessui-react/src/hooks/use-id.ts](/packages/@headlessui-react/src/hooks/use-id.ts) (*)
-- [packages/@headlessui-react/src/hooks/use-iso-morphic-effect.ts](/packages/@headlessui-react/src/hooks/use-iso-morphic-effect.ts) (*)
+- [packages/@headlessui-react/src/hooks/use-id.ts](/packages/@headlessui-react/src/hooks/use-id.ts)
+- [packages/@headlessui-react/src/hooks/use-iso-morphic-effect.ts](/packages/@headlessui-react/src/hooks/use-iso-morphic-effect.ts)
 - [packages/@headlessui-react/src/hooks/use-server-handoff-complete.ts](/packages/@headlessui-react/src/hooks/use-server-handoff-complete.ts) (*)
 - [packages/@headlessui-react/src/hooks/use-sync-refs.ts](/packages/@headlessui-react/src/hooks/use-sync-refs.ts) (*)
 - [packages/@headlessui-react/src/hooks/use-latest-value.ts](/packages/@headlessui-react/src/hooks/use-latest-value.ts) (*)
