@@ -1,10 +1,12 @@
 # 代码阅读推荐顺序
 
 ## 核心概念与配置
+
 - [package.json](/package.json)
 - [scripts/build.sh](/scripts/build.sh)
 
 ## 通用工具与辅助函数
+
 - [packages/@headlessui-react/src/utils/render.ts](/packages/@headlessui-react/src/utils/render.ts)
 - [packages/@headlessui-vue/src/utils/render.ts](/packages/@headlessui-vue/src/utils/render.ts)
 - [packages/@headlessui-react/src/utils/match.ts](/packages/@headlessui-react/src/utils/match.ts)
@@ -13,6 +15,7 @@
 - [packages/@headlessui-vue/src/utils/focus-management.ts](/packages/@headlessui-vue/src/utils/focus-management.ts)
 
 ## 核心钩子函数 - React版本
+
 - [packages/@headlessui-react/src/hooks/use-id.ts](/packages/@headlessui-react/src/hooks/use-id.ts)
 - [packages/@headlessui-react/src/hooks/use-iso-morphic-effect.ts](/packages/@headlessui-react/src/hooks/use-iso-morphic-effect.ts)
 - [packages/@headlessui-react/src/hooks/use-server-handoff-complete.ts](/packages/@headlessui-react/src/hooks/use-server-handoff-complete.ts)
@@ -24,12 +27,14 @@
 - [packages/@headlessui-react/src/hooks/use-root-containers.tsx](/packages/@headlessui-react/src/hooks/use-root-containers.tsx) (*)
 
 ## 核心钩子函数 - Vue版本
+
 - [packages/@headlessui-vue/src/hooks/use-id.ts](/packages/@headlessui-vue/src/hooks/use-id.ts) (*)
 - [packages/@headlessui-vue/src/hooks/use-event-listener.ts](/packages/@headlessui-vue/src/hooks/use-event-listener.ts) (*)
 - [packages/@headlessui-vue/src/hooks/use-root-containers.ts](/packages/@headlessui-vue/src/hooks/use-root-containers.ts) (*)
 - [packages/@headlessui-vue/src/hooks/use-text-value.ts](/packages/@headlessui-vue/src/hooks/use-text-value.ts) (*)
 
 ## 内部实现和共享组件
+
 - [packages/@headlessui-react/src/internal/hidden.tsx](/packages/@headlessui-react/src/internal/hidden.tsx) (*)
 - [packages/@headlessui-vue/src/internal/hidden.ts](/packages/@headlessui-vue/src/internal/hidden.ts) (*)
 - [packages/@headlessui-react/src/internal/open-closed.tsx](/packages/@headlessui-react/src/internal/open-closed.tsx) (*)
@@ -39,16 +44,19 @@
 - [packages/@headlessui-react/src/internal/floating.tsx](/packages/@headlessui-react/src/internal/floating.tsx) (*)
 
 ## 基础组件 - React版本
+
 - [packages/@headlessui-react/src/components/portal/portal.tsx](/packages/@headlessui-react/src/components/portal/portal.tsx) (*)
 - [packages/@headlessui-react/src/components/focus-trap/focus-trap.tsx](/packages/@headlessui-react/src/components/focus-trap/focus-trap.tsx) (*)
 - [packages/@headlessui-react/src/components/transition/transition.tsx](/packages/@headlessui-react/src/components/transition/transition.tsx) (*)
 
 ## 基础组件 - Vue版本
+
 - [packages/@headlessui-vue/src/components/portal/portal.ts](/packages/@headlessui-vue/src/components/portal/portal.ts) (*)
 - [packages/@headlessui-vue/src/components/focus-trap/focus-trap.ts](/packages/@headlessui-vue/src/components/focus-trap/focus-trap.ts) (*)
 - [packages/@headlessui-vue/src/components/transitions/transition.ts](/packages/@headlessui-vue/src/components/transitions/transition.ts) (*)
 
 ## 交互组件 - React版本
+
 - [packages/@headlessui-react/src/components/menu/menu.tsx](/packages/@headlessui-react/src/components/menu/menu.tsx) (*)
 - [packages/@headlessui-react/src/components/listbox/listbox.tsx](/packages/@headlessui-react/src/components/listbox/listbox.tsx) (*)
 - [packages/@headlessui-react/src/components/combobox/combobox.tsx](/packages/@headlessui-react/src/components/combobox/combobox.tsx) (*)
@@ -57,6 +65,7 @@
 - [packages/@headlessui-react/src/components/dialog/dialog.tsx](/packages/@headlessui-react/src/components/dialog/dialog.tsx) (*)
 
 ## 交互组件 - Vue版本
+
 - [packages/@headlessui-vue/src/components/menu/menu.ts](/packages/@headlessui-vue/src/components/menu/menu.ts) (*)
 - [packages/@headlessui-vue/src/components/listbox/listbox.ts](/packages/@headlessui-vue/src/components/listbox/listbox.ts) (*)
 - [packages/@headlessui-vue/src/components/switch/switch.ts](/packages/@headlessui-vue/src/components/switch/switch.ts) (*)
@@ -64,10 +73,12 @@
 - [packages/@headlessui-vue/src/components/dialog/dialog.ts](/packages/@headlessui-vue/src/components/dialog/dialog.ts) (*)
 
 ## 导出和入口
+
 - [packages/@headlessui-react/src/index.ts](/packages/@headlessui-react/src/index.ts) (*)
 - [packages/@headlessui-vue/src/index.ts](/packages/@headlessui-vue/src/index.ts) (*)
 
 ## 示例应用
+
 - [playgrounds/react/pages/_app.tsx](/playgrounds/react/pages/_app.tsx) (*)
 - [playgrounds/vue/src/App.vue](/playgrounds/vue/src/App.vue) (*)
 - [playgrounds/vue/src/Layout.vue](/playgrounds/vue/src/Layout.vue) (*)
