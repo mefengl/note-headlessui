@@ -15,11 +15,11 @@
 ## 核心钩子函数 - React版本
 - [packages/@headlessui-react/src/hooks/use-id.ts](/packages/@headlessui-react/src/hooks/use-id.ts)
 - [packages/@headlessui-react/src/hooks/use-iso-morphic-effect.ts](/packages/@headlessui-react/src/hooks/use-iso-morphic-effect.ts)
-- [packages/@headlessui-react/src/hooks/use-server-handoff-complete.ts](/packages/@headlessui-react/src/hooks/use-server-handoff-complete.ts) (*)
-- [packages/@headlessui-react/src/hooks/use-sync-refs.ts](/packages/@headlessui-react/src/hooks/use-sync-refs.ts) (*)
-- [packages/@headlessui-react/src/hooks/use-latest-value.ts](/packages/@headlessui-react/src/hooks/use-latest-value.ts) (*)
-- [packages/@headlessui-react/src/hooks/use-event.ts](/packages/@headlessui-react/src/hooks/use-event.ts) (*)
-- [packages/@headlessui-react/src/hooks/use-disposables.ts](/packages/@headlessui-react/src/hooks/use-disposables.ts) (*)
+- [packages/@headlessui-react/src/hooks/use-server-handoff-complete.ts](/packages/@headlessui-react/src/hooks/use-server-handoff-complete.ts)
+- [packages/@headlessui-react/src/hooks/use-latest-value.ts](/packages/@headlessui-react/src/hooks/use-latest-value.ts)
+- [packages/@headlessui-react/src/hooks/use-event.ts](/packages/@headlessui-react/src/hooks/use-event.ts)
+- [packages/@headlessui-react/src/hooks/use-sync-refs.ts](/packages/@headlessui-react/src/hooks/use-sync-refs.ts)
+- [packages/@headlessui-react/src/hooks/use-disposables.ts](/packages/@headlessui-react/src/hooks/use-disposables.ts)
 - [packages/@headlessui-react/src/hooks/use-outside-click.ts](/packages/@headlessui-react/src/hooks/use-outside-click.ts) (*)
 - [packages/@headlessui-react/src/hooks/use-root-containers.tsx](/packages/@headlessui-react/src/hooks/use-root-containers.tsx) (*)
 
