@@ -1,10 +1,43 @@
+<!--
+  Layout.vue - Headless UI Vue Playground 布局组件
+  
+  这是Vue示例应用的基础布局组件，提供以下功能：
+  1. 整体页面结构：
+     - 顶部导航栏：显示Logo和Vue标识
+     - 主内容区域：可滚动，默认浅灰背景
+  2. 集成开发工具：
+     - KeyCaster：按键显示工具，用于演示键盘交互
+  
+  布局结构：
+  ```
+  +------------------------+
+  |       Header           |
+  | [Logo]          (Vue)  |
+  +------------------------+
+  |                        |
+  |         Main          |
+  |     <slot></slot>     |
+  |                        |
+  |     [KeyCaster]       |
+  +------------------------+
+  ```
+  
+  样式特点：
+  1. 全屏高度弹性布局
+  2. 暗色系导航栏（gray-700）
+  3. 浅色系内容区（gray-50）
+  4. 响应式内边距
+-->
+
 <template>
   <div
     class="flex h-screen flex-col overflow-hidden bg-gray-700 font-sans text-gray-900 antialiased"
   >
+    <!-- 顶部导航栏 -->
     <header
       class="relative z-10 flex flex-shrink-0 items-center justify-between border-b border-gray-200 bg-gray-700 px-4 py-4 sm:px-6 lg:px-8"
     >
+      <!-- Logo和首页链接 -->
       <router-link to="/">
         <svg class="h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 243 42">
           <path
@@ -59,8 +92,11 @@
           </defs>
         </svg>
       </router-link>
+      <!-- 框架标识 -->
       <span class="font-bold text-white">(Vue)</span>
     </header>
+
+    <!-- 主内容区域 -->
     <main class="flex-1 overflow-auto bg-gray-50">
       <slot></slot>
       <KeyCaster />
@@ -73,8 +109,9 @@ import KeyCaster from './KeyCaster.vue'
 
 export default {
   name: 'Layout',
+  
   components: {
-    KeyCaster,
+    KeyCaster, // 按键显示组件
   },
 }
 </script>

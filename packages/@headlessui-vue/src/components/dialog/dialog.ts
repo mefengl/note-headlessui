@@ -1,4 +1,39 @@
-// WAI-ARIA: https://www.w3.org/WAI/ARIA/apg/patterns/dialogmodal/
+/**
+ * Dialog 对话框组件模块
+ * 
+ * 这是一个无样式的模态对话框组件，实现了WAI-ARIA对话框设计模式。
+ * WAI-ARIA规范: https://www.w3.org/WAI/ARIA/apg/patterns/dialogmodal/
+ * 
+ * 组件特点：
+ * 1. 完全无样式 - 所有外观由用户自定义
+ * 2. 遵循WAI-ARIA最佳实践：
+ *    - 正确的ARIA角色和属性
+ *    - 焦点管理和捕获
+ *    - ESC键关闭支持
+ * 3. 智能的交互控制：
+ *    - 自动锁定背景滚动
+ *    - 点击外部自动关闭
+ *    - 支持嵌套对话框
+ * 4. 可组合的子组件：
+ *    - DialogOverlay: 背景遮罩
+ *    - DialogBackdrop: 背景装饰
+ *    - DialogPanel: 内容面板
+ *    - DialogTitle: 标题（自动关联ARIA）
+ *    - DialogDescription: 描述文本
+ * 
+ * 使用示例:
+ * ```vue
+ * <Dialog v-model="isOpen">
+ *   <DialogBackdrop />
+ *   <DialogPanel>
+ *     <DialogTitle>对话框标题</DialogTitle>
+ *     <DialogDescription>描述文本</DialogDescription>
+ *     <button @click="isOpen = false">关闭</button>
+ *   </DialogPanel>
+ * </Dialog>
+ * ```
+ */
+
 import {
   computed,
   defineComponent,
@@ -32,24 +67,42 @@ import { Features, render } from '../../utils/render'
 import { Description, useDescriptions } from '../description/description'
 import { Portal, PortalGroup, useNestedPortals } from '../portal/portal'
 
+/**
+ * 对话框状态枚举
+ * Open: 打开状态
+ * Closed: 关闭状态
+ */
 enum DialogStates {
   Open,
   Closed,
 }
 
+/**
+ * 对话框组件状态定义
+ * 用于在组件层级间共享状态
+ */
 interface StateDefinition {
+  /** 对话框当前状态 */
   dialogState: Ref<DialogStates>
-
+  /** 标题ID，用于aria-labelledby */
   titleId: Ref<string | null>
+  /** 内容面板引用 */
   panelRef: Ref<HTMLDivElement | null>
-
+  /** 设置标题ID */
   setTitleId(id: string | null): void
-
+  /** 关闭对话框 */
   close(): void
 }
 
+/**
+ * 对话框组件上下文
+ * 使用Vue的inject/provide机制在组件层级间共享状态
+ */
 let DialogContext = Symbol('DialogContext') as InjectionKey<StateDefinition>
 
+/**
+ * 获取对话框上下文的工具函数
+ */
 function useDialogContext(component: string) {
   let context = inject(DialogContext, null)
   if (context === null) {
@@ -64,6 +117,37 @@ function useDialogContext(component: string) {
 
 let Missing = 'DC8F892D-2EBD-447C-A4C8-A03058436FF4'
 
+/**
+ * Dialog组件 - 对话框容器
+ * 
+ * 核心功能：
+ * 1. 状态管理：
+ *    - 打开/关闭状态控制
+ *    - 支持受控和非受控模式
+ * 2. 焦点管理：
+ *    - 打开时自动捕获焦点
+ *    - 支持自定义初始焦点
+ *    - 关闭时焦点恢复
+ * 3. 无障碍支持：
+ *    - role="dialog"或"alertdialog"
+ *    - aria-modal="true"
+ *    - aria-labelledby关联标题
+ *    - aria-describedby关联描述
+ * 4. 智能交互：
+ *    - ESC键关闭
+ *    - 点击外部关闭
+ *    - 背景滚动锁定
+ *    - 支持嵌套对话框
+ * 
+ * Props:
+ * - as: 渲染的元素类型，默认div
+ * - static: 是否静态渲染
+ * - unmount: 关闭时是否卸载DOM
+ * - open: 开启状态
+ * - initialFocus: 初始焦点元素
+ * - id: 元素ID
+ * - role: 对话框角色(dialog/alertdialog)
+ */
 export let Dialog = defineComponent({
   name: 'Dialog',
   inheritAttrs: false, // Manually handling this
@@ -349,6 +433,18 @@ export let Dialog = defineComponent({
 
 // ---
 
+/**
+ * DialogOverlay组件 - 背景遮罩层
+ * 
+ * 特点:
+ * 1. 点击时自动关闭对话框
+ * 2. 仅响应直接点击事件
+ * 3. 自动添加aria-hidden
+ * 
+ * Props:
+ * - as: 渲染的元素类型，默认div
+ * - id: 元素ID
+ */
 export let DialogOverlay = defineComponent({
   name: 'DialogOverlay',
   props: {
@@ -387,6 +483,18 @@ export let DialogOverlay = defineComponent({
 
 // ---
 
+/**
+ * DialogBackdrop组件 - 背景装饰层
+ * 
+ * 特点:
+ * 1. 必须和DialogPanel配合使用
+ * 2. 自动添加aria-hidden
+ * 3. 强制使用Portal渲染
+ * 
+ * Props:
+ * - as: 渲染的元素类型，默认div
+ * - id: 元素ID
+ */
 export let DialogBackdrop = defineComponent({
   name: 'DialogBackdrop',
   props: {
@@ -434,6 +542,18 @@ export let DialogBackdrop = defineComponent({
 
 // ---
 
+/**
+ * DialogPanel组件 - 对话框内容面板
+ * 
+ * 特点:
+ * 1. 阻止点击事件冒泡
+ * 2. 自动注册到Dialog上下文
+ * 3. 提供ref给父组件
+ * 
+ * Props:
+ * - as: 渲染的元素类型，默认div
+ * - id: 元素ID
+ */
 export let DialogPanel = defineComponent({
   name: 'DialogPanel',
   props: {
@@ -471,6 +591,18 @@ export let DialogPanel = defineComponent({
 
 // ---
 
+/**
+ * DialogTitle组件 - 对话框标题
+ * 
+ * 特点:
+ * 1. 自动注册ID到Dialog
+ * 2. 用于aria-labelledby关联
+ * 3. 默认使用h2标签
+ * 
+ * Props:
+ * - as: 渲染的元素类型，默认h2
+ * - id: 元素ID
+ */
 export let DialogTitle = defineComponent({
   name: 'DialogTitle',
   props: {
@@ -503,4 +635,8 @@ export let DialogTitle = defineComponent({
 
 // ---
 
+/**
+ * DialogDescription组件 - 对话框描述文本
+ * 由Description组件实现，主要用于提供aria-describedby支持
+ */
 export let DialogDescription = Description

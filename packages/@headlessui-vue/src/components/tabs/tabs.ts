@@ -1,3 +1,34 @@
+/**
+ * Tabs 标签页组件模块
+ * 
+ * 这是一个完全无样式的标签页组件，提供类似浏览器标签页的交互体验。
+ * 组件特点：
+ * 1. 完全无样式 - 所有样式由用户自定义
+ * 2. 完整键盘支持：
+ *    - 方向键：在标签间导航
+ *    - Home/End：跳转到第一个/最后一个标签
+ *    - Space/Enter：选中当前标签
+ * 3. 两种激活模式：
+ *    - auto：焦点跟随自动激活标签
+ *    - manual：需要手动点击才激活标签
+ * 4. 完整的WAI-ARIA无障碍支持
+ * 5. 支持垂直和水平布局
+ * 
+ * 使用示例:
+ * ```vue
+ * <TabGroup>
+ *   <TabList>
+ *     <Tab>标签1</Tab>
+ *     <Tab>标签2</Tab>
+ *   </TabList>
+ *   <TabPanels>
+ *     <TabPanel>内容1</TabPanel>
+ *     <TabPanel>内容2</TabPanel>
+ *   </TabPanels>
+ * </TabGroup>
+ * ```
+ */
+
 import {
   Fragment,
   computed,
@@ -25,54 +56,106 @@ import { microTask } from '../../utils/micro-task'
 import { getOwnerDocument } from '../../utils/owner'
 import { Features, omit, render } from '../../utils/render'
 
+/**
+ * 标签导航方向枚举
+ * Forwards: 向前导航
+ * Backwards: 向后导航
+ */
 enum Direction {
   Forwards,
   Backwards,
 }
 
+/**
+ * 排序比较结果枚举
+ * Less: 小于
+ * Equal: 等于
+ * Greater: 大于
+ */
 enum Ordering {
   Less = -1,
   Equal = 0,
   Greater = 1,
 }
 
+/**
+ * Tabs组件状态定义
+ * 用于在组件层级间共享状态
+ */
 type StateDefinition = {
-  // State
+  /** 当前选中的标签索引 */
   selectedIndex: Ref<number | null>
+  /** 标签布局方向 */
   orientation: Ref<'vertical' | 'horizontal'>
+  /** 标签激活模式 */
   activation: Ref<'auto' | 'manual'>
-
+  /** 所有标签页的引用数组 */
   tabs: Ref<Ref<HTMLElement | null>[]>
+  /** 所有面板的引用数组 */
   panels: Ref<Ref<HTMLElement | null>[]>
 
-  // State mutators
+  // 状态操作方法
+  /** 设置选中标签 */
   setSelectedIndex(index: number): void
+  /** 注册标签页 */
   registerTab(tab: Ref<HTMLElement | null>): void
+  /** 注销标签页 */
   unregisterTab(tab: Ref<HTMLElement | null>): void
+  /** 注册面板 */
   registerPanel(panel: Ref<HTMLElement | null>): void
+  /** 注销面板 */
   unregisterPanel(panel: Ref<HTMLElement | null>): void
 }
 
+/**
+ * Tabs组件上下文
+ * 使用Vue的inject/provide机制在组件层级间共享状态
+ */
 let TabsContext = Symbol('TabsContext') as InjectionKey<StateDefinition>
 
+/**
+ * 获取Tabs上下文的工具函数
+ */
 function useTabsContext(component: string) {
   let context = inject(TabsContext, null)
-
   if (context === null) {
     let err = new Error(`<${component} /> is missing a parent <TabGroup /> component.`)
     if (Error.captureStackTrace) Error.captureStackTrace(err, useTabsContext)
     throw err
   }
-
   return context
 }
 
+/**
+ * SSR(服务端渲染)上下文
+ * 用于在服务端生成唯一的标签页ID
+ */
 let TabsSSRContext = Symbol('TabsSSRContext') as InjectionKey<
   Ref<{ tabs: string[]; panels: string[] } | null>
 >
 
-// ---
-
+/**
+ * TabGroup组件 - 标签页容器
+ * 
+ * 核心功能：
+ * 1. 状态管理：
+ *    - 支持受控和非受控模式
+ *    - 维护选中标签索引
+ *    - 管理标签和面板的注册
+ * 2. 布局支持：
+ *    - 水平布局（默认）
+ *    - 垂直布局
+ * 3. 激活模式：
+ *    - auto：焦点跟随自动激活（默认）
+ *    - manual：需要手动点击激活
+ * 
+ * Props：
+ * - as：渲染的元素类型，默认template
+ * - selectedIndex：当前选中索引（受控模式）
+ * - defaultIndex：默认选中索引
+ * - vertical：是否垂直布局
+ * - manual：是否手动激活模式
+ */
 export let TabGroup = defineComponent({
   name: 'TabGroup',
   emits: {
@@ -277,8 +360,16 @@ export let TabGroup = defineComponent({
   },
 })
 
-// ---
-
+/**
+ * TabList组件 - 标签列表容器
+ * 
+ * 功能：
+ * 1. 提供标签页的容器
+ * 2. 设置正确的ARIA属性
+ * 
+ * Props：
+ * - as：渲染的元素类型，默认div
+ */
 export let TabList = defineComponent({
   name: 'TabList',
   props: {
@@ -308,8 +399,24 @@ export let TabList = defineComponent({
   },
 })
 
-// ---
-
+/**
+ * Tab组件 - 单个标签页
+ * 
+ * 功能：
+ * 1. 键盘导航：
+ *    - 方向键：切换标签焦点
+ *    - Home/End：跳转到首/尾标签
+ *    - Space/Enter：选中标签
+ * 2. 状态管理：
+ *    - 选中状态
+ *    - 禁用状态
+ * 3. 自动注册到TabGroup
+ * 
+ * Props：
+ * - as：渲染的元素类型，默认button
+ * - disabled：是否禁用
+ * - id：标签ID
+ */
 export let Tab = defineComponent({
   name: 'Tab',
   props: {
@@ -460,8 +567,16 @@ export let Tab = defineComponent({
   },
 })
 
-// ---
-
+/**
+ * TabPanels组件 - 面板容器
+ * 
+ * 功能：
+ * 1. 提供标签面板的容器
+ * 2. 传递选中状态给子组件
+ * 
+ * Props：
+ * - as：渲染的元素类型，默认div
+ */
 export let TabPanels = defineComponent({
   name: 'TabPanels',
   props: {
@@ -485,6 +600,25 @@ export let TabPanels = defineComponent({
   },
 })
 
+/**
+ * TabPanel组件 - 单个面板
+ * 
+ * 功能：
+ * 1. 条件渲染：
+ *    - 支持动态挂载/卸载
+ *    - 支持静态渲染(始终保持在DOM中)
+ * 2. 可访问性：
+ *    - 自动关联对应的标签
+ *    - 正确的ARIA属性
+ * 3. 自动注册到TabGroup
+ * 
+ * Props：
+ * - as：渲染的元素类型，默认div
+ * - static：是否静态渲染
+ * - unmount：不可见时是否卸载
+ * - id：面板ID
+ * - tabIndex：Tab键序号
+ */
 export let TabPanel = defineComponent({
   name: 'TabPanel',
   props: {

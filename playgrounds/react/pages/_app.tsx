@@ -1,9 +1,36 @@
+/**
+ * Headless UI React Playground 入口文件
+ * 
+ * 这是React示例应用的主入口点，提供了以下功能：
+ * 1. 基础布局结构：
+ *    - 顶部导航栏（带Logo和React标识）
+ *    - 主内容区域
+ * 2. 开发辅助工具：
+ *    - KeyCaster: 按键显示器，用于演示键盘交互
+ *    - disposables: 资源清理工具
+ * 
+ * 核心组件：
+ * - MyApp: Next.js应用入口组件
+ * - KeyCaster: 按键显示器组件
+ * - Logo: Headless UI标志组件
+ */
+
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-
 import { useRouter } from 'next/router'
 import 'tailwindcss/tailwind.css'
 
+/**
+ * disposables 工具函数
+ * 用于管理需要清理的资源（定时器、动画帧等）
+ * 
+ * 提供的方法：
+ * - requestAnimationFrame: 包装版的requestAnimationFrame，会自动清理
+ * - nextFrame: 在下一帧执行回调
+ * - setTimeout: 包装版的setTimeout，会自动清理
+ * - add: 添加自定义清理函数
+ * - dispose: 执行所有清理函数
+ */
 function disposables() {
   let disposables: Function[] = []
 
@@ -38,6 +65,10 @@ function disposables() {
   return api
 }
 
+/**
+ * useDisposables Hook
+ * 将disposables工具封装为React Hook，组件卸载时自动清理
+ */
 export function useDisposables() {
   // Using useState instead of useRef so that we can use the initializer function.
   let [d] = useState(disposables)
@@ -45,6 +76,10 @@ export function useDisposables() {
   return d
 }
 
+/**
+ * 按键显示映射 - Mac系统
+ * 将键盘按键转换为对应的符号显示
+ */
 enum KeyDisplayMac {
   ArrowUp = '↑',
   ArrowDown = '↓',
@@ -67,6 +102,10 @@ enum KeyDisplayMac {
   ' ' = '␣',
 }
 
+/**
+ * 按键显示映射 - Windows系统
+ * 将键盘按键转换为对应的符号显示
+ */
 enum KeyDisplayWindows {
   ArrowUp = '↑',
   ArrowDown = '↓',
@@ -82,11 +121,21 @@ enum KeyDisplayWindows {
   ' ' = '␣',
 }
 
+/**
+ * 工具函数：在执行回调后返回原值
+ * @param value 原始值
+ * @param cb 要执行的回调
+ * @returns 原始值
+ */
 function tap<T>(value: T, cb: (value: T) => void) {
   cb(value)
   return value
 }
 
+/**
+ * useKeyDisplay Hook
+ * 根据当前操作系统返回对应的按键显示映射
+ */
 function useKeyDisplay() {
   let [mounted, setMounted] = useState(false)
 
@@ -99,6 +148,16 @@ function useKeyDisplay() {
   return isMac ? KeyDisplayMac : KeyDisplayWindows
 }
 
+/**
+ * KeyCaster 组件
+ * 在屏幕右下角显示用户按下的按键
+ * 
+ * 功能：
+ * 1. 捕获键盘事件并显示按键符号
+ * 2. 支持组合键显示（如Shift+其他键）
+ * 3. 按键显示2秒后自动消失
+ * 4. 根据操作系统显示不同的按键符号
+ */
 function KeyCaster() {
   let [keys, setKeys] = useState<string[]>([])
   let d = useDisposables()
@@ -128,6 +187,18 @@ function KeyCaster() {
   )
 }
 
+/**
+ * MyApp 组件 - Next.js应用入口
+ * 
+ * 功能：
+ * 1. 提供应用基础布局
+ * 2. 支持raw模式（通过URL查询参数控制）
+ * 3. 集成KeyCaster开发工具
+ * 
+ * Props:
+ * - Component: 页面组件
+ * - pageProps: 页面属性
+ */
 function MyApp({ Component, pageProps }) {
   let router = useRouter()
   if (router.query.raw !== undefined) {
@@ -154,6 +225,10 @@ function MyApp({ Component, pageProps }) {
   )
 }
 
+/**
+ * Logo组件 - Headless UI标志
+ * 渲染项目的SVG标志
+ */
 function Logo({ className }) {
   return (
     <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 243 42">

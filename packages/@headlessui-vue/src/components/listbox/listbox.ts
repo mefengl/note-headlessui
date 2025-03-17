@@ -1,3 +1,27 @@
+/**
+ * Listbox 组件 - Headless UI的核心下拉选择组件
+ * 
+ * 组件特点:
+ * 1. 完全无样式 - 提供基础交互逻辑，样式完全由用户定制
+ * 2. 完整的键盘支持 - 支持方向键导航、Home/End快速跳转等
+ * 3. 支持单选和多选模式
+ * 4. 支持禁用状态
+ * 5. 支持search/type-ahead功能
+ * 6. 完整的WAI-ARIA无障碍支持
+ * 
+ * 使用示例:
+ * ```vue
+ * <Listbox v-model="selected">
+ *   <ListboxButton>{{ selected }}</ListboxButton>
+ *   <ListboxOptions>
+ *     <ListboxOption v-for="item in items" :value="item">
+ *       {{ item }}
+ *     </ListboxOption>
+ *   </ListboxOptions>
+ * </Listbox>
+ * ```
+ */
+
 import {
   Fragment,
   computed,
@@ -38,16 +62,31 @@ function defaultComparator<T>(a: T, z: T): boolean {
   return a === z
 }
 
+/**
+ * ListboxStates - 下拉列表状态枚举
+ * Open: 展开状态
+ * Closed: 收起状态
+ */
 enum ListboxStates {
   Open,
   Closed,
 }
 
+/**
+ * ValueMode - 选择模式枚举
+ * Single: 单选模式
+ * Multi: 多选模式
+ */
 enum ValueMode {
   Single,
   Multi,
 }
 
+/**
+ * ActivationTrigger - 选项激活触发方式
+ * Pointer: 鼠标/触摸触发
+ * Other: 其他方式(如键盘)触发
+ */
 enum ActivationTrigger {
   Pointer,
   Other,
@@ -111,6 +150,20 @@ function useListboxContext(component: string) {
 
 // ---
 
+/**
+ * Listbox组件定义
+ * 
+ * Props说明:
+ * - as: 渲染的根元素类型，默认template
+ * - disabled: 是否禁用
+ * - by: 选项比较函数或键名
+ * - horizontal: 是否水平布局
+ * - modelValue: v-model绑定值
+ * - defaultValue: 默认值
+ * - form: 关联的表单id
+ * - name: 表单项名称
+ * - multiple: 是否多选模式
+ */
 export let Listbox = defineComponent({
   name: 'Listbox',
   emits: { 'update:modelValue': (_value: any) => true },
@@ -423,6 +476,17 @@ export let Listbox = defineComponent({
 
 // ---
 
+/**
+ * ListboxLabel组件 - Listbox的标签组件
+ * 
+ * 特点:
+ * 1. 点击标签会自动聚焦到按钮
+ * 2. 自动关联到按钮，提供无障碍支持
+ * 
+ * Props:
+ * - as: 渲染的元素类型，默认label
+ * - id: 元素ID
+ */
 export let ListboxLabel = defineComponent({
   name: 'ListboxLabel',
   props: {
@@ -458,6 +522,20 @@ export let ListboxLabel = defineComponent({
 
 // ---
 
+/**
+ * ListboxButton组件 - 触发下拉框的按钮组件
+ * 
+ * 功能:
+ * 1. 支持键盘操作:
+ *   - Space/Enter: 打开下拉框并选中第一项
+ *   - ArrowDown: 打开下拉框并选中第一项
+ *   - ArrowUp: 打开下拉框并选中最后一项
+ * 2. 完整的ARIA属性支持
+ * 
+ * Props:
+ * - as: 渲染的元素类型，默认button
+ * - id: 元素ID
+ */
 export let ListboxButton = defineComponent({
   name: 'ListboxButton',
   props: {
@@ -559,6 +637,24 @@ export let ListboxButton = defineComponent({
 
 // ---
 
+/**
+ * ListboxOptions组件 - 下拉选项列表容器
+ * 
+ * 功能:
+ * 1. 键盘导航支持:
+ *   - 方向键: 上下导航选项
+ *   - Home/PageUp: 跳转到第一项
+ *   - End/PageDown: 跳转到最后一项
+ *   - 输入字符: 根据文本快速定位选项
+ * 2. 多选模式支持
+ * 3. 无障碍支持
+ * 
+ * Props:
+ * - as: 渲染的元素类型，默认ul
+ * - static: 是否静态渲染(始终保持在DOM中)
+ * - unmount: 关闭时是否卸载DOM
+ * - id: 元素ID
+ */
 export let ListboxOptions = defineComponent({
   name: 'ListboxOptions',
   props: {
@@ -687,6 +783,21 @@ export let ListboxOptions = defineComponent({
   },
 })
 
+/**
+ * ListboxOption组件 - 单个选项组件
+ * 
+ * 功能:
+ * 1. 支持禁用状态
+ * 2. 自动滚动到可视区域
+ * 3. 鼠标hover激活
+ * 4. 完整的ARIA属性支持
+ * 
+ * Props:
+ * - as: 渲染的元素类型，默认li
+ * - value: 选项值
+ * - disabled: 是否禁用
+ * - id: 元素ID
+ */
 export let ListboxOption = defineComponent({
   name: 'ListboxOption',
   props: {

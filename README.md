@@ -67,22 +67,22 @@
 ## 交互组件 - Vue版本
 
 - [packages/@headlessui-vue/src/components/menu/menu.ts](/packages/@headlessui-vue/src/components/menu/menu.ts)
-- [packages/@headlessui-vue/src/components/listbox/listbox.ts](/packages/@headlessui-vue/src/components/listbox/listbox.ts) (*)
-- [packages/@headlessui-vue/src/components/switch/switch.ts](/packages/@headlessui-vue/src/components/switch/switch.ts) (*)
-- [packages/@headlessui-vue/src/components/tabs/tabs.ts](/packages/@headlessui-vue/src/components/tabs/tabs.ts) (*)
-- [packages/@headlessui-vue/src/components/dialog/dialog.ts](/packages/@headlessui-vue/src/components/dialog/dialog.ts) (*)
+- [packages/@headlessui-vue/src/components/listbox/listbox.ts](/packages/@headlessui-vue/src/components/listbox/listbox.ts)
+- [packages/@headlessui-vue/src/components/switch/switch.ts](/packages/@headlessui-vue/src/components/switch/switch.ts)
+- [packages/@headlessui-vue/src/components/tabs/tabs.ts](/packages/@headlessui-vue/src/components/tabs/tabs.ts)
+- [packages/@headlessui-vue/src/components/dialog/dialog.ts](/packages/@headlessui-vue/src/components/dialog/dialog.ts)
 
 ## 导出和入口
 
-- [packages/@headlessui-react/src/index.ts](/packages/@headlessui-react/src/index.ts) (*)
-- [packages/@headlessui-vue/src/index.ts](/packages/@headlessui-vue/src/index.ts) (*)
+- [packages/@headlessui-react/src/index.ts](/packages/@headlessui-react/src/index.ts)
+- [packages/@headlessui-vue/src/index.ts](/packages/@headlessui-vue/src/index.ts)
 
 ## 示例应用
 
-- [playgrounds/react/pages/_app.tsx](/playgrounds/react/pages/_app.tsx) (*)
-- [playgrounds/vue/src/App.vue](/playgrounds/vue/src/App.vue) (*)
-- [playgrounds/vue/src/Layout.vue](/playgrounds/vue/src/Layout.vue) (*)
-- [playgrounds/react/components/button.tsx](/playgrounds/react/components/button.tsx) (*)
+- [playgrounds/react/pages/_app.tsx](/playgrounds/react/pages/_app.tsx)
+- [playgrounds/vue/src/App.vue](/playgrounds/vue/src/App.vue)
+- [playgrounds/vue/src/Layout.vue](/playgrounds/vue/src/Layout.vue)
+- [playgrounds/react/components/button.tsx](/playgrounds/react/components/button.tsx)
 
 <h3 align="center">
   Headless UI
