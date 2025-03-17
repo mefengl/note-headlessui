@@ -1,3 +1,35 @@
+/**
+ * focus-trap.tsx - 焦点陷阱组件
+ * 
+ * 该组件用于限制键盘焦点在指定的DOM范围内，常用于模态框、下拉菜单等需要
+ * 限制用户焦点的场景。支持以下核心功能：
+ * 1. 初始焦点管理
+ * 2. Tab键循环
+ * 3. 焦点锁定
+ * 4. 焦点恢复
+ * 5. 自动焦点
+ * 
+ * 使用示例：
+ * ```tsx
+ * // 1. 基础用法
+ * <FocusTrap>
+ *   <div>焦点将被限制在这个div内</div>
+ * </FocusTrap>
+ * 
+ * // 2. 自定义初始焦点
+ * const initialRef = useRef(null)
+ * <FocusTrap initialFocus={initialRef}>
+ *   <button ref={initialRef}>这个按钮将获得初始焦点</button>
+ *   <button>其他按钮</button>
+ * </FocusTrap>
+ * 
+ * // 3. 禁用某些特性
+ * <FocusTrap features={FocusTrapFeatures.TabLock | FocusTrapFeatures.RestoreFocus}>
+ *   <div>只启用Tab锁定和焦点恢复</div>
+ * </FocusTrap>
+ * ```
+ */
+
 'use client'
 
 import React, {
@@ -26,17 +58,23 @@ import { match } from '../../utils/match'
 import { microTask } from '../../utils/micro-task'
 import { forwardRefWithAs, useRender, type HasDisplayName, type RefProp } from '../../utils/render'
 
+/**
+ * 容器类型定义
+ * 支持两种方式获取容器：
+ * 1. 函数方式：返回一个包含HTML元素的可迭代对象
+ * 2. 引用方式：一个包含HTML元素引用集合的ref
+ */
 type Containers =
-  // Lazy resolved containers
   | (() => Iterable<HTMLElement>)
-
-  // List of containers
   | MutableRefObject<Set<MutableRefObject<HTMLElement | null>>>
 
+/**
+ * 解析容器集合
+ * 将不同形式的容器配置统一转换为HTMLElement集合
+ */
 function resolveContainers(containers?: Containers): Set<HTMLElement> {
   if (!containers) return new Set<HTMLElement>()
   if (typeof containers === 'function') return new Set(containers())
-
   let all = new Set<HTMLElement>()
   for (let container of containers.current) {
     if (container.current instanceof HTMLElement) {
@@ -46,56 +84,67 @@ function resolveContainers(containers?: Containers): Set<HTMLElement> {
   return all
 }
 
+// 默认渲染为div元素
 let DEFAULT_FOCUS_TRAP_TAG = 'div' as const
 
+/**
+ * 焦点陷阱特性枚举
+ * 使用位运算实现特性组合
+ */
 export enum FocusTrapFeatures {
-  /** No features enabled for the focus trap. */
+  /** 不启用任何特性 */
   None = 0,
-
-  /** Ensure that we move focus initially into the container. */
+  /** 确保初始化时移动焦点到容器内 */
   InitialFocus = 1 << 0,
-
-  /** Ensure that pressing `Tab` and `Shift+Tab` is trapped within the container. */
+  /** 确保Tab键和Shift+Tab在容器内循环 */
   TabLock = 1 << 1,
-
-  /** Ensure that programmatically moving focus outside of the container is disallowed. */
+  /** 阻止程序将焦点移出容器 */
   FocusLock = 1 << 2,
-
-  /** Ensure that we restore the focus when unmounting the focus trap. */
+  /** 组件卸载时恢复之前的焦点 */
   RestoreFocus = 1 << 3,
-
-  /** Initial focus should look for the `data-autofocus` */
+  /** 初始焦点会寻找带有data-autofocus属性的元素 */
   AutoFocus = 1 << 4,
 }
 
+// 组件属性类型定义
 type FocusTrapRenderPropArg = {}
 type FocusTrapPropsWeControl = never
 
+/**
+ * FocusTrap组件属性类型
+ */
 export type FocusTrapProps<TTag extends ElementType = typeof DEFAULT_FOCUS_TRAP_TAG> = Props<
   TTag,
   FocusTrapRenderPropArg,
   FocusTrapPropsWeControl,
   {
-    initialFocus?: MutableRefObject<HTMLElement | null>
-    // A fallback element to focus, but this element will be skipped when tabbing around. This is
-    // only done for focusing a fallback parent container (e.g.: A `Dialog`, but you want to tab
-    // *inside* the dialog excluding the dialog itself).
-    initialFocusFallback?: MutableRefObject<HTMLElement | null>
-    features?: FocusTrapFeatures
-    containers?: Containers
+    initialFocus?: MutableRefObject<HTMLElement | null>    // 初始焦点元素
+    initialFocusFallback?: MutableRefObject<HTMLElement | null> // 初始焦点备选元素
+    features?: FocusTrapFeatures   // 启用的特性
+    containers?: Containers        // 额外的焦点容器
   }
 >
 
+/**
+ * FocusTrap组件实现
+ * 核心功能：
+ * 1. 管理焦点历史
+ * 2. 处理Tab键导航
+ * 3. 限制焦点范围
+ * 4. 自动恢复焦点
+ */
 function FocusTrapFn<TTag extends ElementType = typeof DEFAULT_FOCUS_TRAP_TAG>(
   props: FocusTrapProps<TTag>,
   ref: Ref<HTMLElement>
 ) {
   let container = useRef<HTMLElement | null>(null)
   let focusTrapRef = useSyncRefs(container, ref)
+  
   let {
     initialFocus,
     initialFocusFallback,
     containers,
+    // 默认启用：初始焦点、Tab锁定、焦点锁定和焦点恢复
     features = FocusTrapFeatures.InitialFocus |
       FocusTrapFeatures.TabLock |
       FocusTrapFeatures.FocusLock |
@@ -103,13 +152,17 @@ function FocusTrapFn<TTag extends ElementType = typeof DEFAULT_FOCUS_TRAP_TAG>(
     ...theirProps
   } = props
 
+  // SSR时禁用所有特性
   if (!useServerHandoffComplete()) {
     features = FocusTrapFeatures.None
   }
 
   let ownerDocument = useOwnerDocument(container)
 
+  // 处理焦点恢复
   useRestoreFocus(features, { ownerDocument })
+
+  // 处理初始焦点
   let previousActiveElement = useInitialFocus(features, {
     ownerDocument,
     container,
@@ -117,22 +170,28 @@ function FocusTrapFn<TTag extends ElementType = typeof DEFAULT_FOCUS_TRAP_TAG>(
     initialFocusFallback,
   })
 
+  // 实现焦点锁定
   useFocusLock(features, { ownerDocument, container, containers, previousActiveElement })
 
   let direction = useTabDirection()
+
+  // 处理焦点移动
   let handleFocus = useEvent((e: ReactFocusEvent) => {
     let el = container.current as HTMLElement
     if (!el) return
 
-    // TODO: Cleanup once we are using real browser tests
+    // 在测试环境中使用microTask以确保稳定性
     let wrapper = process.env.NODE_ENV === 'test' ? microTask : (cb: Function) => cb()
+
     wrapper(() => {
       match(direction.current, {
+        // Tab键：移到第一个可聚焦元素
         [TabDirection.Forwards]: () => {
           focusIn(el, Focus.First, {
             skipElements: [e.relatedTarget, initialFocusFallback] as HTMLElement[],
           })
         },
+        // Shift+Tab：移到最后一个可聚焦元素
         [TabDirection.Backwards]: () => {
           focusIn(el, Focus.Last, {
             skipElements: [e.relatedTarget, initialFocusFallback] as HTMLElement[],
@@ -142,6 +201,7 @@ function FocusTrapFn<TTag extends ElementType = typeof DEFAULT_FOCUS_TRAP_TAG>(
     })
   })
 
+  // 检查Tab锁定是否启用
   let tabLockEnabled = useIsTopLayer(
     Boolean(features & FocusTrapFeatures.TabLock),
     'focus-trap#tab-lock'
@@ -149,6 +209,8 @@ function FocusTrapFn<TTag extends ElementType = typeof DEFAULT_FOCUS_TRAP_TAG>(
 
   let d = useDisposables()
   let recentlyUsedTabKey = useRef(false)
+
+  // 处理键盘事件和焦点丢失
   let ourProps = {
     ref: focusTrapRef,
     onKeyDown(e: KeyboardEvent) {
@@ -160,6 +222,7 @@ function FocusTrapFn<TTag extends ElementType = typeof DEFAULT_FOCUS_TRAP_TAG>(
       }
     },
     onBlur(e: ReactFocusEvent) {
+      // 焦点锁定未启用则不处理
       if (!(features & FocusTrapFeatures.FocusLock)) return
 
       let allContainers = resolveContainers(containers)
@@ -168,15 +231,14 @@ function FocusTrapFn<TTag extends ElementType = typeof DEFAULT_FOCUS_TRAP_TAG>(
       let relatedTarget = e.relatedTarget
       if (!(relatedTarget instanceof HTMLElement)) return
 
-      // Known guards, leave them alone!
+      // 忽略焦点守卫元素
       if (relatedTarget.dataset.headlessuiFocusGuard === 'true') {
         return
       }
 
-      // Blur is triggered due to focus on relatedTarget, and the relatedTarget is not inside any
-      // of the dialog containers. In other words, let's move focus back in!
+      // 焦点移出所有容器时处理
       if (!contains(allContainers, relatedTarget)) {
-        // Was the blur invoked via the keyboard? Redirect to the next in line.
+        // 通过Tab键移动焦点：移到下一个元素
         if (recentlyUsedTabKey.current) {
           focusIn(
             container.current as HTMLElement,
@@ -187,9 +249,7 @@ function FocusTrapFn<TTag extends ElementType = typeof DEFAULT_FOCUS_TRAP_TAG>(
             { relativeTo: e.target as HTMLElement }
           )
         }
-
-        // It was invoked via something else (e.g.: click, programmatically, ...). Redirect to the
-        // previous active item in the FocusTrap
+        // 其他方式失去焦点：返回到上一个活动元素
         else if (e.target instanceof HTMLElement) {
           focusElement(e.target)
         }
@@ -199,8 +259,10 @@ function FocusTrapFn<TTag extends ElementType = typeof DEFAULT_FOCUS_TRAP_TAG>(
 
   let render = useRender()
 
+  // 渲染焦点陷阱
   return (
     <>
+      {/* 前置焦点守卫 */}
       {tabLockEnabled && (
         <Hidden
           as="button"
@@ -210,12 +272,16 @@ function FocusTrapFn<TTag extends ElementType = typeof DEFAULT_FOCUS_TRAP_TAG>(
           features={HiddenFeatures.Focusable}
         />
       )}
+
+      {/* 主要内容 */}
       {render({
         ourProps,
         theirProps,
         defaultTag: DEFAULT_FOCUS_TRAP_TAG,
         name: 'FocusTrap',
       })}
+
+      {/* 后置焦点守卫 */}
       {tabLockEnabled && (
         <Hidden
           as="button"
@@ -229,38 +295,37 @@ function FocusTrapFn<TTag extends ElementType = typeof DEFAULT_FOCUS_TRAP_TAG>(
   )
 }
 
-// ---
-
+// 组件类型定义
 export interface _internal_ComponentFocusTrap extends HasDisplayName {
   <TTag extends ElementType = typeof DEFAULT_FOCUS_TRAP_TAG>(
     props: FocusTrapProps<TTag> & RefProp<typeof FocusTrapFn>
   ): React.JSX.Element
 }
 
+// 创建最终的FocusTrap组件
 let FocusTrapRoot = forwardRefWithAs(FocusTrapFn) as _internal_ComponentFocusTrap
-
 export let FocusTrap = Object.assign(FocusTrapRoot, {
   /** @deprecated use `FocusTrapFeatures` instead of `FocusTrap.features` */
   features: FocusTrapFeatures,
 })
 
-// ---
-
+/**
+ * useRestoreElement - 管理需要恢复焦点的元素
+ * 
+ * 追踪并记录焦点历史，以便在需要时恢复到正确的元素
+ */
 function useRestoreElement(enabled: boolean = true) {
   let localHistory = useRef<HTMLElement[]>(history.slice())
-
+  
   useWatch(
     ([newEnabled], [oldEnabled]) => {
-      // We are disabling the restore element, so we need to clear it.
+      // 禁用恢复功能时清除历史
       if (oldEnabled === true && newEnabled === false) {
-        // However, let's schedule it in a microTask, so that we can still read the value in the
-        // places where we are restoring the focus.
         microTask(() => {
           localHistory.current.splice(0)
         })
       }
-
-      // We are enabling the restore element, so we need to set it to the last "focused" element.
+      // 启用恢复功能时记录当前历史
       if (oldEnabled === false && newEnabled === true) {
         localHistory.current = history.slice()
       }
@@ -268,38 +333,50 @@ function useRestoreElement(enabled: boolean = true) {
     [enabled, history, localHistory]
   )
 
-  // We want to return the last element that is still connected to the DOM, so we can restore the
-  // focus to it.
+  // 返回最后一个仍在DOM中的元素
   return useEvent(() => {
     return localHistory.current.find((x) => x != null && x.isConnected) ?? null
   })
 }
 
+/**
+ * useRestoreFocus - 实现焦点恢复功能
+ * 
+ * 在以下情况恢复焦点：
+ * 1. enabled变为false时
+ * 2. 组件卸载时
+ */
 function useRestoreFocus(
   features: FocusTrapFeatures,
   { ownerDocument }: { ownerDocument: Document | null }
 ) {
   let enabled = Boolean(features & FocusTrapFeatures.RestoreFocus)
-
   let getRestoreElement = useRestoreElement(enabled)
 
-  // Restore the focus to the previous element when `enabled` becomes false again
+  // enabled变为false时恢复焦点
   useWatch(() => {
     if (enabled) return
-
     if (ownerDocument?.activeElement === ownerDocument?.body) {
       focusElement(getRestoreElement())
     }
   }, [enabled])
 
-  // Restore the focus to the previous element when the component is unmounted
+  // 组件卸载时恢复焦点
   useOnUnmount(() => {
     if (!enabled) return
-
     focusElement(getRestoreElement())
   })
 }
 
+/**
+ * useInitialFocus - 实现初始焦点功能
+ * 
+ * 焦点设置优先级：
+ * 1. initialFocus指定的元素
+ * 2. 带有data-autofocus属性的元素（如果启用AutoFocus）
+ * 3. 容器内第一个可聚焦元素
+ * 4. initialFocusFallback指定的元素
+ */
 function useInitialFocus(
   features: FocusTrapFeatures,
   {
@@ -319,84 +396,65 @@ function useInitialFocus(
     Boolean(features & FocusTrapFeatures.InitialFocus),
     'focus-trap#initial-focus'
   )
-
   let mounted = useIsMounted()
 
-  // Handle initial focus
   useWatch(() => {
-    // No focus management needed
-    if (features === FocusTrapFeatures.None) {
-      return
-    }
-
+    if (features === FocusTrapFeatures.None) return
+    
     if (!enabled) {
-      // If we are disabling the initialFocus, then we should focus the fallback element if one is
-      // provided. This is needed to ensure _something_ is focused. Typically a wrapping element
-      // (e.g.: `Dialog` component).
-      //
-      // Note: we _don't_ want to move focus to the `initialFocus` ref, because the `InitialFocus`
-      // feature is disabled.
+      // InitialFocus禁用时，尝试聚焦fallback元素
       if (initialFocusFallback?.current) {
         focusElement(initialFocusFallback.current)
       }
-
       return
     }
+
     let containerElement = container.current
     if (!containerElement) return
 
-    // Delaying the focus to the next microtask ensures that a few conditions are true:
-    // - The container is rendered
-    // - Transitions could be started
-    // If we don't do this, then focusing an element will immediately cancel any transitions. This
-    // is not ideal because transitions will look broken.
-    // There is an additional issue with doing this immediately. The FocusTrap is used inside a
-    // Dialog, the Dialog is rendered inside of a Portal and the Portal is rendered at the end of
-    // the `document.body`. This means that the moment we call focus, the browser immediately
-    // tries to focus the element, which will still be at the bottom resulting in the page to
-    // scroll down. Delaying this will prevent the page to scroll down entirely.
+    // 延迟到下一个微任务执行焦点设置
+    // 这样可以：
+    // 1. 确保容器已渲染
+    // 2. 避免中断过渡动画
+    // 3. 防止页面滚动问题
     microTask(() => {
-      if (!mounted.current) {
-        return
-      }
+      if (!mounted.current) return
 
       let activeElement = ownerDocument?.activeElement as HTMLElement
-
+      
+      // 检查是否已经有正确的焦点
       if (initialFocus?.current) {
         if (initialFocus?.current === activeElement) {
           previousActiveElement.current = activeElement
-          return // Initial focus ref is already the active element
+          return
         }
       } else if (containerElement!.contains(activeElement)) {
         previousActiveElement.current = activeElement
-        return // Already focused within Dialog
+        return
       }
 
-      // Try to focus the initialFocus ref
+      // 尝试设置焦点
       if (initialFocus?.current) {
         focusElement(initialFocus.current)
       } else {
         if (features & FocusTrapFeatures.AutoFocus) {
-          // Try to focus the first focusable element with `Focus.AutoFocus` feature enabled
+          // 尝试聚焦第一个带有autofocus的元素
           if (focusIn(containerElement!, Focus.First | Focus.AutoFocus) !== FocusResult.Error) {
-            return // Worked, bail
+            return
           }
+        } else if (focusIn(containerElement!, Focus.First) !== FocusResult.Error) {
+          return
         }
-
-        // Try to focus the first focusable element.
-        else if (focusIn(containerElement!, Focus.First) !== FocusResult.Error) {
-          return // Worked, bail
-        }
-
-        // Try the fallback
+        
+        // 尝试聚焦fallback元素
         if (initialFocusFallback?.current) {
           focusElement(initialFocusFallback.current)
           if (ownerDocument?.activeElement === initialFocusFallback.current) {
-            return // Worked, bail
+            return
           }
         }
 
-        // Nothing worked
+        // 都失败了，输出警告
         console.warn('There are no focusable elements inside the <FocusTrap />')
       }
 
@@ -407,6 +465,14 @@ function useInitialFocus(
   return previousActiveElement
 }
 
+/**
+ * useFocusLock - 实现焦点锁定功能
+ * 
+ * 防止焦点通过程序方式移出容器，如：
+ * 1. input.focus()
+ * 2. button.focus()
+ * 3. 其他可以设置焦点的DOM API
+ */
 function useFocusLock(
   features: FocusTrapFeatures,
   {
@@ -424,7 +490,6 @@ function useFocusLock(
   let mounted = useIsMounted()
   let enabled = Boolean(features & FocusTrapFeatures.FocusLock)
 
-  // Prevent programmatically escaping the container
   useEventListener(
     ownerDocument?.defaultView,
     'focus',
@@ -439,13 +504,15 @@ function useFocusLock(
       if (!previous) return
 
       let toElement = event.target as HTMLElement | null
-
+      
       if (toElement && toElement instanceof HTMLElement) {
+        // 焦点移出容器时，阻止事件并恢复焦点
         if (!contains(allContainers, toElement)) {
           event.preventDefault()
           event.stopPropagation()
           focusElement(previous)
         } else {
+          // 更新上一个焦点元素
           previousActiveElement.current = toElement
           focusElement(toElement)
         }
@@ -457,10 +524,12 @@ function useFocusLock(
   )
 }
 
+/**
+ * 工具函数：检查元素是否在容器集合内
+ */
 function contains(containers: Set<HTMLElement>, element: HTMLElement) {
   for (let container of containers) {
     if (container.contains(element)) return true
   }
-
   return false
 }

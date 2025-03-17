@@ -1,3 +1,32 @@
+/**
+ * floating.tsx - 浮动定位系统
+ * 
+ * 这个模块基于@floating-ui/react，提供了一个完整的浮动元素定位解决方案。
+ * 主要用于实现弹出菜单、工具提示、下拉列表等需要精确定位的UI组件。
+ * 
+ * 核心功能：
+ * 1. 智能定位 - 自动计算最佳显示位置
+ * 2. 边缘检测 - 防止内容超出视口
+ * 3. 自动调整 - 根据可用空间动态调整位置
+ * 4. 虚拟滚动支持 - 优化长列表性能
+ * 
+ * 使用示例：
+ * ```tsx
+ * function Dropdown() {
+ *   return (
+ *     <FloatingProvider>
+ *       <button ref={useFloatingReference()}>
+ *         打开菜单
+ *       </button>
+ *       <FloatingPanel anchor="bottom">
+ *         菜单内容
+ *       </FloatingPanel>
+ *     </FloatingProvider>
+ *   )
+ * }
+ * ```
+ */
+
 import {
   autoUpdate,
   flip as flipMiddleware,
@@ -17,65 +46,76 @@ import { useDisposables } from '../hooks/use-disposables'
 import { useEvent } from '../hooks/use-event'
 import { useIsoMorphicEffect } from '../hooks/use-iso-morphic-effect'
 
-type Align = 'start' | 'end'
-type Placement = 'top' | 'right' | 'bottom' | 'left'
+/**
+ * 定义基础类型
+ */
+type Align = 'start' | 'end'     // 对齐方式
+type Placement = 'top' | 'right' | 'bottom' | 'left' // 放置位置
 
+/**
+ * 基础锚点属性
+ * 小朋友们可以这样理解：
+ * - gap：就像两块积木之间的间隙
+ * - offset：把积木向某个方向推一点点
+ * - padding：积木离墙壁要保持的距离
+ */
 type BaseAnchorProps = {
-  /**
-   * The `gap` is the space between the trigger and the panel.
-   */
-  gap: number | string // For `var()` support
-
-  /**
-   * The `offset` is the amount the panel should be nudged from its original position.
-   */
-  offset: number | string // For `var()` support
-
-  /**
-   * The `padding` is the minimum space between the panel and the viewport.
-   */
-  padding: number | string // For `var()` support
+  gap: number | string    // 触发器和面板之间的间距
+  offset: number | string // 面板相对原位置的偏移量
+  padding: number | string // 面板距离视口的最小距离
 }
 
+/**
+ * 锚点属性类型定义
+ * 支持三种形式：
+ * 1. false - 完全禁用浮动功能
+ * 2. 字符串 - 简单的位置定义，如"top"或"bottom end"
+ * 3. 对象 - 详细的配置项
+ */
 export type AnchorProps =
-  | false // Disable entirely
-  | (`${Placement}` | `${Placement} ${Align}`) // String value to define the placement
+  | false 
+  | (`${Placement}` | `${Placement} ${Align}`)
   | Partial<
       BaseAnchorProps & {
-        /**
-         * The `to` value defines which side of the trigger the panel should be placed on and its
-         * alignment.
-         */
         to: `${Placement}` | `${Placement} ${Align}`
       }
     >
 
+/**
+ * 带选区支持的锚点属性
+ * 在AnchorProps基础上增加了'selection'选项，
+ * 用于将面板定位到当前选中的文本位置
+ */
 export type AnchorPropsWithSelection =
-  | false // Disable entirely
+  | false
   | (`${Placement | 'selection'}` | `${Placement | 'selection'} ${Align}`)
   | Partial<
       BaseAnchorProps & {
-        /**
-         * The `to` value defines which side of the trigger the panel should be placed on and its
-         * alignment.
-         */
         to: `${Placement | 'selection'}` | `${Placement | 'selection'} ${Align}`
       }
     >
 
+/**
+ * 内部浮动面板属性
+ * 用于虚拟滚动优化
+ */
 export type InternalFloatingPanelProps = Partial<{
   inner: {
-    listRef: InnerProps['listRef']
-    index: InnerProps['index']
+    listRef: InnerProps['listRef']  // 列表引用
+    index: InnerProps['index']      // 当前索引
   }
 }>
 
+/**
+ * 浮动上下文
+ * 提供浮动相关的状态和方法给子组件使用
+ */
 let FloatingContext = createContext<{
-  styles?: UseFloatingReturn<any>['floatingStyles']
-  setReference: UseFloatingReturn<any>['refs']['setReference']
-  setFloating: UseFloatingReturn<any>['refs']['setFloating']
-  getReferenceProps: ReturnType<typeof useInteractions>['getReferenceProps']
-  getFloatingProps: ReturnType<typeof useInteractions>['getFloatingProps']
+  styles?: UseFloatingReturn<any>['floatingStyles']  // 浮动元素样式
+  setReference: UseFloatingReturn<any>['refs']['setReference'] // 设置参考元素
+  setFloating: UseFloatingReturn<any>['refs']['setFloating']   // 设置浮动元素
+  getReferenceProps: ReturnType<typeof useInteractions>['getReferenceProps'] // 参考元素props
+  getFloatingProps: ReturnType<typeof useInteractions>['getFloatingProps']   // 浮动元素props
   slot: Partial<{
     anchor: `${Placement | 'selection'}` | `${Placement | 'selection'} ${Align}`
   }>
@@ -87,7 +127,14 @@ let FloatingContext = createContext<{
   getFloatingProps: () => ({}),
   slot: {},
 })
+
+// 设置displayName方便调试
 FloatingContext.displayName = 'FloatingContext'
+
+/**
+ * 位置上下文
+ * 用于更新锚点配置
+ */
 let PlacementContext = createContext<
   ((value: Exclude<AnchorPropsWithSelection, boolean> | null) => void) | null
 >(null)
@@ -367,6 +414,14 @@ export function FloatingProvider({
   )
 }
 
+/**
+ * useFixScrollingPixel - 修复滚动像素精度问题
+ * 
+ * 在某些浏览器中，maxHeight可能会得到带小数的值，
+ * 这个Hook会将其向上取整以避免渲染问题。
+ * 
+ * @param element 需要修复的元素
+ */
 function useFixScrollingPixel(element: HTMLElement | null) {
   useIsoMorphicEffect(() => {
     if (!element) return
@@ -396,6 +451,11 @@ function useFixScrollingPixel(element: HTMLElement | null) {
   }, [element])
 }
 
+/**
+ * useResolvedConfig - 解析像素值配置
+ * 
+ * 将配置中的CSS变量或数值转换为实际的像素值
+ */
 function useResolvedConfig(
   config: (Exclude<AnchorPropsWithSelection, boolean | string> & InternalFloatingPanelProps) | null,
   element?: HTMLElement | null
@@ -407,6 +467,15 @@ function useResolvedConfig(
   return { ...config, gap, offset, padding }
 }
 
+/**
+ * useResolvePxValue - 将任意值解析为像素值
+ * 
+ * 支持：
+ * 1. 纯数字
+ * 2. CSS变量
+ * 3. calc()表达式
+ * 4. 其他CSS长度单位(rem, em, vw等)
+ */
 function useResolvePxValue(
   input?: string | number,
   element?: HTMLElement | null,

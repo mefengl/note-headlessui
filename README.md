@@ -23,36 +23,36 @@
 - [packages/@headlessui-react/src/hooks/use-event.ts](/packages/@headlessui-react/src/hooks/use-event.ts)
 - [packages/@headlessui-react/src/hooks/use-sync-refs.ts](/packages/@headlessui-react/src/hooks/use-sync-refs.ts)
 - [packages/@headlessui-react/src/hooks/use-disposables.ts](/packages/@headlessui-react/src/hooks/use-disposables.ts)
-- [packages/@headlessui-react/src/hooks/use-outside-click.ts](/packages/@headlessui-react/src/hooks/use-outside-click.ts) (*)
-- [packages/@headlessui-react/src/hooks/use-root-containers.tsx](/packages/@headlessui-react/src/hooks/use-root-containers.tsx) (*)
+- [packages/@headlessui-react/src/hooks/use-outside-click.ts](/packages/@headlessui-react/src/hooks/use-outside-click.ts)
+- [packages/@headlessui-react/src/hooks/use-root-containers.tsx](/packages/@headlessui-react/src/hooks/use-root-containers.tsx)
 
 ## 核心钩子函数 - Vue版本
 
-- [packages/@headlessui-vue/src/hooks/use-id.ts](/packages/@headlessui-vue/src/hooks/use-id.ts) (*)
-- [packages/@headlessui-vue/src/hooks/use-event-listener.ts](/packages/@headlessui-vue/src/hooks/use-event-listener.ts) (*)
-- [packages/@headlessui-vue/src/hooks/use-root-containers.ts](/packages/@headlessui-vue/src/hooks/use-root-containers.ts) (*)
-- [packages/@headlessui-vue/src/hooks/use-text-value.ts](/packages/@headlessui-vue/src/hooks/use-text-value.ts) (*)
+- [packages/@headlessui-vue/src/hooks/use-id.ts](/packages/@headlessui-vue/src/hooks/use-id.ts)
+- [packages/@headlessui-vue/src/hooks/use-event-listener.ts](/packages/@headlessui-vue/src/hooks/use-event-listener.ts)
+- [packages/@headlessui-vue/src/hooks/use-root-containers.ts](/packages/@headlessui-vue/src/hooks/use-root-containers.ts)
+- [packages/@headlessui-vue/src/hooks/use-text-value.ts](/packages/@headlessui-vue/src/hooks/use-text-value.ts)
 
 ## 内部实现和共享组件
 
-- [packages/@headlessui-react/src/internal/hidden.tsx](/packages/@headlessui-react/src/internal/hidden.tsx) (*)
-- [packages/@headlessui-vue/src/internal/hidden.ts](/packages/@headlessui-vue/src/internal/hidden.ts) (*)
-- [packages/@headlessui-react/src/internal/open-closed.tsx](/packages/@headlessui-react/src/internal/open-closed.tsx) (*)
-- [packages/@headlessui-vue/src/internal/open-closed.ts](/packages/@headlessui-vue/src/internal/open-closed.ts) (*)
-- [packages/@headlessui-react/src/internal/portal-force-root.tsx](/packages/@headlessui-react/src/internal/portal-force-root.tsx) (*)
-- [packages/@headlessui-vue/src/internal/portal-force-root.ts](/packages/@headlessui-vue/src/internal/portal-force-root.ts) (*)
-- [packages/@headlessui-react/src/internal/floating.tsx](/packages/@headlessui-react/src/internal/floating.tsx) (*)
+- [packages/@headlessui-react/src/internal/hidden.tsx](/packages/@headlessui-react/src/internal/hidden.tsx)
+- [packages/@headlessui-vue/src/internal/hidden.ts](/packages/@headlessui-vue/src/internal/hidden.ts)
+- [packages/@headlessui-react/src/internal/open-closed.tsx](/packages/@headlessui-react/src/internal/open-closed.tsx)
+- [packages/@headlessui-vue/src/internal/open-closed.ts](/packages/@headlessui-vue/src/internal/open-closed.ts)
+- [packages/@headlessui-react/src/internal/portal-force-root.tsx](/packages/@headlessui-react/src/internal/portal-force-root.tsx)
+- [packages/@headlessui-vue/src/internal/portal-force-root.ts](/packages/@headlessui-vue/src/internal/portal-force-root.ts)
+- [packages/@headlessui-react/src/internal/floating.tsx](/packages/@headlessui-react/src/internal/floating.tsx)
 
 ## 基础组件 - React版本
 
-- [packages/@headlessui-react/src/components/portal/portal.tsx](/packages/@headlessui-react/src/components/portal/portal.tsx) (*)
-- [packages/@headlessui-react/src/components/focus-trap/focus-trap.tsx](/packages/@headlessui-react/src/components/focus-trap/focus-trap.tsx) (*)
-- [packages/@headlessui-react/src/components/transition/transition.tsx](/packages/@headlessui-react/src/components/transition/transition.tsx) (*)
+- [packages/@headlessui-react/src/components/portal/portal.tsx](/packages/@headlessui-react/src/components/portal/portal.tsx)
+- [packages/@headlessui-react/src/components/focus-trap/focus-trap.tsx](/packages/@headlessui-react/src/components/focus-trap/focus-trap.tsx)
+- [packages/@headlessui-react/src/components/transition/transition.tsx](/packages/@headlessui-react/src/components/transition/transition.tsx)
 
 ## 基础组件 - Vue版本
 
-- [packages/@headlessui-vue/src/components/portal/portal.ts](/packages/@headlessui-vue/src/components/portal/portal.ts) (*)
-- [packages/@headlessui-vue/src/components/focus-trap/focus-trap.ts](/packages/@headlessui-vue/src/components/focus-trap/focus-trap.ts) (*)
+- [packages/@headlessui-vue/src/components/portal/portal.ts](/packages/@headlessui-vue/src/components/portal/portal.ts)
+- [packages/@headlessui-vue/src/components/focus-trap/focus-trap.ts](/packages/@headlessui-vue/src/components/focus-trap/focus-trap.ts)
 - [packages/@headlessui-vue/src/components/transitions/transition.ts](/packages/@headlessui-vue/src/components/transitions/transition.ts) (*)
 
 ## 交互组件 - React版本
