@@ -47,7 +47,7 @@ export enum RenderStrategy {
 // =============================================================================
 
 /**
- * render函数
+ * 渲染函数 - 处理组件的渲染逻辑
  * 
  * Vue版本的核心渲染实现:
  * 1. 支持相同的特性系统
@@ -78,36 +78,21 @@ export function render({
 }) {
   // 合并props
   let props = mergeProps(theirProps, ourProps)
-  let mainWithProps = Object.assign(main, { props })
 
-  // 可见性处理 - 与React版本逻辑相同
-  if (visible) return _render(mainWithProps)
-
-  // 特性系统处理
-  if (features & Features.Static) {
-    // 静态渲染 - 用户控制模式
-    if (props.static) return _render(mainWithProps)
+  // 根据渲染策略和可见性状态选择渲染方法
+  let strategy = calculateStrategy(props, features)
+  if (strategy === RenderStrategy.Unmount && !visible) {
+    return null
   }
 
-  // 渲染策略处理
-  if (features & Features.RenderStrategy) {
-    let strategy = props.unmount ?? true ? RenderStrategy.Unmount : RenderStrategy.Hidden
-    
-    return match(strategy, {
-      [RenderStrategy.Unmount]() {
-        return null
-      },
-      [RenderStrategy.Hidden]() {
-        return _render({
-          ...main,
-          props: { ...props, hidden: true, style: { display: 'none' } },
-        })
-      },
-    })
-  }
-
-  // 默认渲染
-  return _render(mainWithProps)
+  // 返回实际的渲染结果
+  return _render({
+    ...main,
+    props: {
+      ...props,
+      ...(strategy === RenderStrategy.Hidden && visible ? { hidden: true, style: { display: 'none' } } : {}),
+    },
+  })
 }
 
 // =============================================================================
@@ -116,7 +101,7 @@ export function render({
 // =============================================================================
 
 /**
- * _render函数
+ * 内部渲染函数 - 处理具体的DOM渲染逻辑
  * 
  * Vue版本的具体渲染实现:
  * 1. 处理as属性(动态标签)
@@ -142,12 +127,13 @@ function _render({
   slots: Slots
   name: string
 }) {
+  // 解构props，分离as属性和其他属性
   let { as, ...incomingProps } = omit(props, ['unmount', 'static'])
 
   // 处理默认插槽
   let children = slots.default?.(slot)
 
-  // 生成data-*属性
+  // 生成data-*属性，用于状态标记
   let dataAttributes: Record<string, string> = {}
   if (slot) {
     let exposeState = false
@@ -163,58 +149,28 @@ function _render({
     if (exposeState) dataAttributes[`data-headlessui-state`] = states.join(' ')
   }
 
-  // template特殊处理 - Vue特有
+  // 处理template特殊情况
   if (as === 'template') {
-    children = flattenFragments(children ?? [])
-    
-    // 检查是否需要传递props
     if (Object.keys(incomingProps).length > 0 || Object.keys(attrs).length > 0) {
-      let [firstChild, ...other] = children ?? []
-
-      // 验证template的子元素
-      if (!isValidElement(firstChild) || other.length > 0) {
-        throw new Error(
+      let allProps = [...Object.keys(incomingProps), ...Object.keys(attrs)]
+      throw new Error(
+        [
+          'Passing props on "template"!',
+          '',
+          `The current component <${name} /> is rendering a "template".`,
+          'However we need to passthrough the following props:',
+          allProps.map(line => `  - ${line}`).join('\n'),
+          '',
+          'You can apply a few solutions:',
           [
-            'Passing props on "template"!',
-            '',
-            `The current component <${name} /> is rendering a "template".`,
-            `However we need to passthrough the following props:`,
-            Object.keys(incomingProps)
-              .concat(Object.keys(attrs))
-              .map((name) => name.trim())
-              .filter((current, idx, all) => all.indexOf(current) === idx)
-              .sort((a, z) => a.localeCompare(z))
-              .map((line) => `  - ${line}`)
-              .join('\n'),
-            '',
-            'You can apply a few solutions:',
-            [
-              'Add an `as="..."` prop, to ensure that we render an actual element instead of a "template".',
-              'Render a single element as the child so that we can forward the props onto that element.',
-            ]
-              .map((line) => `  - ${line}`)
-              .join('\n'),
-          ].join('\n')
-        )
-      }
-
-      // 合并props并克隆节点
-      let mergedProps = mergeProps(firstChild.props ?? {}, incomingProps, dataAttributes)
-      let cloned = cloneVNode(firstChild, mergedProps, true)
-
-      // 显式覆盖on*事件处理器
-      // 这是因为在某些情况下(如aria-disabled="true"时)我们需要显式设置它们为undefined
-      for (let prop in mergedProps) {
-        if (prop.startsWith('on')) {
-          cloned.props ||= {}
-          cloned.props[prop] = mergedProps[prop]
-        }
-      }
-      
-      return cloned
+            'Add an `as="..."` prop, to ensure that we render an actual element instead of a "template".',
+            'Render a single element as the child so that we can forward the props onto that element.',
+          ].map(line => `  - ${line}`).join('\n'),
+        ].join('\n')
+      )
     }
 
-    // 简单的template渲染
+    // template元素的特殊处理
     if (Array.isArray(children) && children.length === 1) {
       return children[0]
     }
@@ -296,6 +252,50 @@ function mergeProps(...listOfProps: Record<any, any>[]) {
     )
   }
 
+  // 合并事件处理器
+  for (let eventName in eventHandlers) {
+    Object.assign(target, {
+      [eventName](event: { defaultPrevented: boolean }, ...args: any[]) {
+        let handlers = eventHandlers[eventName]
+        for (let handler of handlers) {
+          if (event instanceof Event && event.defaultPrevented) {
+            return
+          }
+          handler(event, ...args)
+        }
+      },
+    })
+  }
+
+  return target
+}
+
+/**
+ * 工具函数
+ */
+
+/** 清理undefined值 */
+export function compact<T extends Record<any, any>>(object: T) {
+  let clone = Object.assign({}, object)
+  for (let key in clone) {
+    if (clone[key] === undefined) delete clone[key]
+  }
+  return clone
+}
+
+/** 排除指定键 */
+export function omit<T extends Record<any, any>, Keys extends keyof T>(
+  object: T,
+  keysToOmit: readonly Keys[] = []
+) {
+  let clone = Object.assign({}, object) as T
+  for (let key of keysToOmit) {
+    if (key in clone) delete clone[key]
+  }
+  return clone as Omit<T, Keys>
+}
+
+/**
   // 合并事件处理器
   for (let eventName in eventHandlers) {
     Object.assign(target, {
