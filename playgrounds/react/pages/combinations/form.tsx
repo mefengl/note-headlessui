@@ -3,7 +3,10 @@ import { useState } from 'react'
 import { Button } from '../../components/button'
 import { classNames } from '../../utils/class-names'
 
-function Section({ title, children }) {
+/**
+ * Section 组件 - 用于组织表单的不同部分
+ */
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <fieldset className="rounded-lg border bg-gray-200/20 p-3">
       <legend className="rounded-md border bg-gray-100 px-2 text-sm uppercase">{title}</legend>
@@ -20,6 +23,13 @@ let people = [
 ]
 let locations = ['New York', 'London', 'Paris', 'Berlin']
 
+/**
+ * 表单组合示例
+ * 展示如何在表单中使用 Switch 组件:
+ * 1. 基本开关使用
+ * 2. 数组值提交
+ * 3. 表单重置支持
+ */
 export default function App() {
   let [result, setResult] = useState(() =>
     typeof window === 'undefined' || typeof document === 'undefined' ? [] : new FormData()
@@ -37,6 +47,7 @@ export default function App() {
       >
         <div className="grid w-full grid-cols-[repeat(auto-fill,minmax(350px,1fr))] items-start gap-3">
           <Section title="Switch">
+            {/* 基本开关示例 */}
             <Section title="Single value">
               <Switch.Group as="div" className="flex items-center justify-between space-x-4">
                 <Switch.Label>Enable notifications</Switch.Label>
@@ -63,6 +74,7 @@ export default function App() {
               </Switch.Group>
             </Section>
 
+            {/* 多值开关示例 */}
             <Section title="Multiple values">
               <Switch.Group as="div" className="flex items-center justify-between space-x-4">
                 <Switch.Label>Apple</Switch.Label>

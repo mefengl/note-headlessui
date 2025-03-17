@@ -6,6 +6,7 @@
     >
       <div class="grid w-full grid-cols-[repeat(auto-fill,minmax(350px,1fr))] items-start gap-3">
         <Section title="Switch">
+          {/* 基本开关示例 */}
           <Section title="Single value">
             <SwitchGroup as="div" class="flex items-center justify-between space-x-4">
               <SwitchLabel>Enable notifications</SwitchLabel>
@@ -22,6 +23,7 @@
             </SwitchGroup>
           </Section>
 
+          {/* 多值开关示例 */}
           <Section title="Multiple values">
             <SwitchGroup as="div" class="flex items-center justify-between space-x-4">
               <SwitchLabel>Apple</SwitchLabel>

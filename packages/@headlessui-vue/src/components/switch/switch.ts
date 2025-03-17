@@ -22,24 +22,36 @@ import { compact, omit, render } from '../../utils/render'
 import { Description, useDescriptions } from '../description/description'
 import { Label, useLabels } from '../label/label'
 
+/**
+ * Switch组件状态定义
+ * 用于在 Switch.Group 中共享状态
+ */
 type StateDefinition = {
-  // State
-  switchRef: Ref<HTMLButtonElement | null>
-  labelledby: Ref<string | undefined>
-  describedby: Ref<string | undefined>
+  switchRef: Ref<HTMLButtonElement | null>     // 开关按钮元素引用
+  labelledby: Ref<string | undefined>          // aria-labelledby属性值
+  describedby: Ref<string | undefined>         // aria-describedby属性值
 }
 
+/**
+ * Switch Group上下文
+ * 用于在组件层级间共享状态
+ */
 let GroupContext = Symbol('GroupContext') as InjectionKey<StateDefinition>
 
-// ---
-
+/**
+ * Switch Group组件实现
+ * 提供Group上下文支持
+ */
 export let SwitchGroup = defineComponent({
   name: 'SwitchGroup',
   props: {
-    as: { type: [Object, String], default: 'template' },
+    as: { type: [Object, String], default: 'template' }
   },
   setup(props, { slots, attrs }) {
+    // 创建共享状态
     let switchRef = ref<StateDefinition['switchRef']['value']>(null)
+    
+    // Label关联设置
     let labelledby = useLabels({
       name: 'SwitchLabel',
       props: {
@@ -54,47 +66,62 @@ export let SwitchGroup = defineComponent({
         },
       },
     })
+
     let describedby = useDescriptions({ name: 'SwitchDescription' })
 
     let api = { switchRef, labelledby, describedby }
 
+    // 提供上下文
     provide(GroupContext, api)
 
     return () =>
       render({ theirProps: props, ourProps: {}, slot: {}, slots, attrs, name: 'SwitchGroup' })
-  },
+  }
 })
 
-// ---
-
+/**
+ * Switch开关组件实现
+ * 主要功能:
+ * 1. 支持v-model双向绑定
+ * 2. 支持表单集成
+ * 3. 支持键盘操作
+ * 4. 完整的可访问性支持
+ * 5. 支持在Group中使用
+ */
 export let Switch = defineComponent({
   name: 'Switch',
+  
   emits: { 'update:modelValue': (_value: boolean) => true },
+  
   props: {
     as: { type: [Object, String], default: 'button' },
-    modelValue: { type: Boolean, default: undefined },
-    defaultChecked: { type: Boolean, optional: true },
-    form: { type: String, optional: true },
-    name: { type: String, optional: true },
-    value: { type: String, optional: true },
-    id: { type: String, default: () => `headlessui-switch-${useId()}` },
-    disabled: { type: Boolean, default: false },
-    tabIndex: { type: Number, default: 0 },
+    modelValue: { type: Boolean, default: undefined },       // v-model绑定值
+    defaultChecked: { type: Boolean, optional: true },       // 默认选中状态
+    form: { type: String, optional: true },                  // 关联表单ID
+    name: { type: String, optional: true },                  // 表单字段名
+    value: { type: String, optional: true },                 // 表单提交值
+    id: { type: String, default: () => `headlessui-switch-${useId()}` },  // 组件ID
+    disabled: { type: Boolean, default: false },             // 禁用状态
+    tabIndex: { type: Number, default: 0 },                 // Tab键序号
   },
-  inheritAttrs: false,
+
   setup(props, { emit, attrs, slots, expose }) {
+    // 获取Group上下文
     let api = inject(GroupContext, null)
 
+    // 状态管理
     let [checked, theirOnChange] = useControllable(
       computed(() => props.modelValue),
       (value: boolean) => emit('update:modelValue', value),
       computed(() => props.defaultChecked)
     )
 
+    // 状态切换
     function toggle() {
       theirOnChange(!checked.value)
     }
 
+    // 引用处理
     let internalSwitchRef = ref<HTMLButtonElement | null>(null)
     let switchRef = api === null ? internalSwitchRef : api.switchRef
     let type = useResolveButtonType(
@@ -104,6 +131,7 @@ export let Switch = defineComponent({
 
     expose({ el: switchRef, $el: switchRef })
 
+    // 事件处理
     function handleClick(event: MouseEvent) {
       event.preventDefault()
       toggle()
@@ -118,11 +146,12 @@ export let Switch = defineComponent({
       }
     }
 
-    // This is needed so that we can "cancel" the click event when we use the `Enter` key on a button.
+    // 阻止Enter键的默认点击行为
     function handleKeyPress(event: KeyboardEvent) {
       event.preventDefault()
     }
 
+    // 表单重置处理
     let form = computed(() => dom(switchRef)?.closest?.('form'))
     onMounted(() => {
       watch(
@@ -146,7 +175,11 @@ export let Switch = defineComponent({
 
     return () => {
       let { id, name, value, form, tabIndex, ...theirProps } = props
+      
+      // 渲染属性
       let slot = { checked: checked.value }
+      
+      // 组件属性
       let ourProps = {
         id,
         ref: switchRef,
@@ -162,6 +195,7 @@ export let Switch = defineComponent({
       }
 
       return h(Fragment, [
+        // 表单集成支持
         name != null && checked.value != null
           ? h(
               Hidden,
@@ -179,6 +213,7 @@ export let Switch = defineComponent({
               })
             )
           : null,
+        // 渲染Switch
         render({
           ourProps,
           theirProps: { ...attrs, ...omit(theirProps, ['modelValue', 'defaultChecked']) },
@@ -192,7 +227,6 @@ export let Switch = defineComponent({
   },
 })
 
-// ---
-
+// 导出组件
 export let SwitchLabel = Label
 export let SwitchDescription = Description
