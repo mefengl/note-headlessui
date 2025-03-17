@@ -53,20 +53,20 @@
 
 - [packages/@headlessui-vue/src/components/portal/portal.ts](/packages/@headlessui-vue/src/components/portal/portal.ts)
 - [packages/@headlessui-vue/src/components/focus-trap/focus-trap.ts](/packages/@headlessui-vue/src/components/focus-trap/focus-trap.ts)
-- [packages/@headlessui-vue/src/components/transitions/transition.ts](/packages/@headlessui-vue/src/components/transitions/transition.ts) (*)
+- [packages/@headlessui-vue/src/components/transitions/transition.ts](/packages/@headlessui-vue/src/components/transitions/transition.ts)
 
 ## 交互组件 - React版本
 
-- [packages/@headlessui-react/src/components/menu/menu.tsx](/packages/@headlessui-react/src/components/menu/menu.tsx) (*)
-- [packages/@headlessui-react/src/components/listbox/listbox.tsx](/packages/@headlessui-react/src/components/listbox/listbox.tsx) (*)
-- [packages/@headlessui-react/src/components/combobox/combobox.tsx](/packages/@headlessui-react/src/components/combobox/combobox.tsx) (*)
-- [packages/@headlessui-react/src/components/switch/switch.tsx](/packages/@headlessui-react/src/components/switch/switch.tsx) (*)
-- [packages/@headlessui-react/src/components/tabs/tabs.tsx](/packages/@headlessui-react/src/components/tabs/tabs.tsx) (*)
-- [packages/@headlessui-react/src/components/dialog/dialog.tsx](/packages/@headlessui-react/src/components/dialog/dialog.tsx) (*)
+- [packages/@headlessui-react/src/components/menu/menu.tsx](/packages/@headlessui-react/src/components/menu/menu.tsx)
+- [packages/@headlessui-react/src/components/listbox/listbox.tsx](/packages/@headlessui-react/src/components/listbox/listbox.tsx)
+- [packages/@headlessui-react/src/components/combobox/combobox.tsx](/packages/@headlessui-react/src/components/combobox/combobox.tsx)
+- [packages/@headlessui-react/src/components/switch/switch.tsx](/packages/@headlessui-react/src/components/switch/switch.tsx)
+- [packages/@headlessui-react/src/components/tabs/tabs.tsx](/packages/@headlessui-react/src/components/tabs/tabs.tsx)
+- [packages/@headlessui-react/src/components/dialog/dialog.tsx](/packages/@headlessui-react/src/components/dialog/dialog.tsx)
 
 ## 交互组件 - Vue版本
 
-- [packages/@headlessui-vue/src/components/menu/menu.ts](/packages/@headlessui-vue/src/components/menu/menu.ts) (*)
+- [packages/@headlessui-vue/src/components/menu/menu.ts](/packages/@headlessui-vue/src/components/menu/menu.ts)
 - [packages/@headlessui-vue/src/components/listbox/listbox.ts](/packages/@headlessui-vue/src/components/listbox/listbox.ts) (*)
 - [packages/@headlessui-vue/src/components/switch/switch.ts](/packages/@headlessui-vue/src/components/switch/switch.ts) (*)
 - [packages/@headlessui-vue/src/components/tabs/tabs.ts](/packages/@headlessui-vue/src/components/tabs/tabs.ts) (*)

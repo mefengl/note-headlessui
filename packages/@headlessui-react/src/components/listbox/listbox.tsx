@@ -1,3 +1,17 @@
+/**
+ * Listbox组件 - HeadlessUI中的可访问性选择框实现
+ * 
+ * 遵循WAI-ARIA列表框(Listbox)模式规范
+ * 功能亮点：
+ * 1. 完全无样式 - 提供完整的样式自由度
+ * 2. 键盘导航 - 支持方向键、Home/End、字符搜索等
+ * 3. 多选支持 - 可配置单选或多选模式
+ * 4. 表单集成 - 支持原生表单提交和重置
+ * 5. 无障碍 - 完整的ARIA属性支持
+ * 6. 可控模式 - 支持受控和非受控使用
+ * 7. TypeScript - 完整的类型推导和检查
+ */
+
 'use client'
 
 import { useFocusRing } from '@react-aria/focus'
@@ -84,21 +98,44 @@ import { Keys } from '../keyboard'
 import { Label, useLabelledBy, useLabels, type _internal_ComponentLabel } from '../label/label'
 import { Portal } from '../portal/portal'
 
+/**
+ * 列表框状态枚举
+ * - Open: 列表框展开中
+ * - Closed: 列表框已收起
+ */
 enum ListboxStates {
   Open,
   Closed,
 }
 
+/**
+ * 值模式枚举
+ * - Single: 单选模式,只能选择一个选项
+ * - Multi: 多选模式,可以选择多个选项
+ */
 enum ValueMode {
   Single,
   Multi,
 }
 
+/**
+ * 激活触发方式枚举
+ * - Pointer: 通过鼠标/触摸等指针设备
+ * - Other: 其他方式(如键盘)
+ */
 enum ActivationTrigger {
   Pointer,
   Other,
 }
 
+/**
+ * 列表项数据引用类型
+ * 存储每个选项的关键信息:
+ * - textValue: 选项的文本内容,用于搜索匹配
+ * - disabled: 是否禁用
+ * - value: 选项的实际值
+ * - domRef: 对应DOM节点的引用
+ */
 type ListboxOptionDataRef<T> = MutableRefObject<{
   textValue?: string
   disabled: boolean
@@ -106,6 +143,19 @@ type ListboxOptionDataRef<T> = MutableRefObject<{
   domRef: MutableRefObject<HTMLElement | null>
 }>
 
+/**
+ * 列表框状态定义
+ * 包含所有核心状态数据:
+ * - dataRef: 存储共享数据的引用
+ * - listboxState: 当前打开状态
+ * - options: 所有选项的信息
+ * - searchQuery: 搜索查询字符串 
+ * - activeOptionIndex: 当前激活项索引
+ * - activationTrigger: 激活方式
+ * - buttonElement: 触发按钮元素
+ * - optionsElement: 选项列表容器元素
+ * - __demoMode: 是否处于演示模式
+ */
 interface StateDefinition<T> {
   dataRef: MutableRefObject<_Data>
 
@@ -122,6 +172,15 @@ interface StateDefinition<T> {
   __demoMode: boolean
 }
 
+/**
+ * 动作类型枚举
+ * 定义所有可能的状态更新动作:
+ * - OpenListbox/CloseListbox: 打开/关闭列表框
+ * - GoToOption: 导航到特定选项
+ * - Search/ClearSearch: 搜索相关操作
+ * - RegisterOption/UnregisterOption: 选项注册管理
+ * - SetButtonElement/SetOptionsElement: 更新DOM引用
+ */
 enum ActionTypes {
   OpenListbox,
   CloseListbox,
@@ -182,6 +241,17 @@ type Actions<T> =
   | { type: ActionTypes.SetButtonElement; element: HTMLButtonElement | null }
   | { type: ActionTypes.SetOptionsElement; element: HTMLElement | null }
 
+/**
+ * 状态归约器数据结构
+ * 包含所有动作类型对应的处理器:
+ * 1. CloseListbox - 关闭列表框并清除活动项
+ * 2. OpenListbox - 打开列表框并可能选中默认项
+ * 3. GoToOption - 复杂的选项导航逻辑
+ * 4. Search - 实时搜索过滤
+ * 5. RegisterOption - 注册新选项
+ * 6. UnregisterOption - 移除选项
+ * 每个处理器都接收当前状态和动作,返回新状态
+ */
 let reducers: {
   [P in ActionTypes]: <T>(
     state: StateDefinition<T>,

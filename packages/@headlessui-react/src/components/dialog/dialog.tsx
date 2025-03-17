@@ -1,3 +1,25 @@
+/**
+ * Dialog对话框组件
+ * 实现WAI-ARIA对话框模式：https://www.w3.org/WAI/ARIA/apg/patterns/dialogmodal/
+ * 
+ * 主要特性：
+ * 1. 完整的WAI-ARIA支持
+ * 2. 焦点陷阱和管理
+ * 3. 键盘导航(Esc关闭)
+ * 4. 点击外部区域关闭
+ * 5. 滚动锁定
+ * 6. Portal传送门
+ * 7. 动画过渡支持
+ * 8. 可访问性支持
+ * 
+ * 核心子组件：
+ * - Dialog: 对话框容器
+ * - Dialog.Panel: 内容面板
+ * - Dialog.Title: 标题
+ * - Dialog.Description: 描述文本
+ * - Dialog.Backdrop: 背景遮罩
+ */
+
 'use client'
 
 // WAI-ARIA: https://www.w3.org/WAI/ARIA/apg/patterns/dialogmodal/
@@ -55,22 +77,41 @@ import { FocusTrap, FocusTrapFeatures } from '../focus-trap/focus-trap'
 import { Portal, PortalGroup, useNestedPortals } from '../portal/portal'
 import { Transition, TransitionChild } from '../transition/transition'
 
+/**
+ * 对话框状态枚举
+ */
 enum DialogStates {
-  Open,
-  Closed,
+  Open,   // 打开状态
+  Closed  // 关闭状态
 }
 
+/**
+ * 对话框状态定义
+ */
 interface StateDefinition {
-  titleId: string | null
-  panelRef: MutableRefObject<HTMLElement | null>
+  titleId: string | null          // 标题ID
+  panelRef: MutableRefObject<HTMLElement | null>  // 面板DOM引用
 }
 
+/**
+ * 动作类型枚举
+ */
 enum ActionTypes {
-  SetTitleId,
+  SetTitleId,  // 设置标题ID动作
 }
 
-type Actions = { type: ActionTypes.SetTitleId; id: string | null }
+/**
+ * 动作类型定义
+ */
+type Actions = { 
+  type: ActionTypes.SetTitleId
+  id: string | null 
+}
 
+/**
+ * 状态归约器映射
+ * 处理所有可能的状态更新动作
+ */
 let reducers: {
   [P in ActionTypes]: (
     state: StateDefinition,
@@ -83,20 +124,28 @@ let reducers: {
   },
 }
 
+/**
+ * Dialog上下文
+ * 在组件树中共享对话框状态和动作
+ */
 let DialogContext = createContext<
   | [
       {
-        dialogState: DialogStates
-        unmount: boolean
-        close: () => void
-        setTitleId: (id: string | null) => void
+        dialogState: DialogStates   // 当前状态(开启/关闭)
+        unmount: boolean           // 关闭时是否卸载
+        close: () => void         // 关闭方法
+        setTitleId: (id: string | null) => void  // 设置标题ID
       },
-      StateDefinition,
+      StateDefinition             // 对话框状态
     ]
   | null
 >(null)
 DialogContext.displayName = 'DialogContext'
 
+/**
+ * Dialog上下文Hook
+ * 获取上下文数据,如果不在Dialog内使用会抛出错误
+ */
 function useDialogContext(component: string) {
   let context = useContext(DialogContext)
   if (context === null) {
@@ -107,12 +156,24 @@ function useDialogContext(component: string) {
   return context
 }
 
+/**
+ * 状态归约器
+ * 使用match函数将动作分发到对应的处理器
+ */
 function stateReducer(state: StateDefinition, action: Actions) {
   return match(action.type, reducers, state, action)
 }
 
-// ---
-
+/**
+ * Dialog内部实现组件
+ * 处理核心逻辑:
+ * 1. 状态管理
+ * 2. 可访问性
+ * 3. 焦点管理
+ * 4. 滚动锁定
+ * 5. 点击外部关闭
+ * 6. Portal渲染
+ */
 let InternalDialog = forwardRefWithAs(function InternalDialog<
   TTag extends ElementType = typeof DEFAULT_DIALOG_TAG,
 >(props: DialogProps<TTag>, ref: Ref<HTMLElement>) {
@@ -328,29 +389,53 @@ let InternalDialog = forwardRefWithAs(function InternalDialog<
 
 // ---
 
+/**
+ * Dialog组件默认标签
+ */
 let DEFAULT_DIALOG_TAG = 'div' as const
-type DialogRenderPropArg = {
-  open: boolean
-}
-type DialogPropsWeControl = 'aria-describedby' | 'aria-labelledby' | 'aria-modal'
 
+/**
+ * Dialog渲染属性参数
+ */
+type DialogRenderPropArg = {
+  open: boolean  // 是否打开
+}
+
+/**
+ * Dialog组件控制的aria属性
+ */
+type DialogPropsWeControl = 
+  | 'aria-describedby'  // 描述文本ID
+  | 'aria-labelledby'   // 标题ID
+  | 'aria-modal'        // 模态框标识
+
+/**
+ * Dialog渲染特性
+ */
 let DialogRenderFeatures = RenderFeatures.RenderStrategy | RenderFeatures.Static
 
+/**
+ * Dialog组件属性
+ */
 export type DialogProps<TTag extends ElementType = typeof DEFAULT_DIALOG_TAG> = Props<
   TTag,
   DialogRenderPropArg,
   DialogPropsWeControl,
   PropsForFeatures<typeof DialogRenderFeatures> & {
-    open?: boolean
-    onClose: (value: boolean) => void
-    initialFocus?: MutableRefObject<HTMLElement | null>
-    role?: 'dialog' | 'alertdialog'
-    autoFocus?: boolean
-    transition?: boolean
-    __demoMode?: boolean
+    open?: boolean                // 是否打开
+    onClose: (value: boolean) => void  // 关闭回调
+    initialFocus?: MutableRefObject<HTMLElement | null>  // 初始焦点元素
+    role?: 'dialog' | 'alertdialog'  // ARIA角色
+    autoFocus?: boolean           // 是否自动聚焦
+    transition?: boolean         // 是否启用过渡动画
+    __demoMode?: boolean        // 演示模式(禁用某些特性)
   }
 >
 
+/**
+ * Dialog组件函数实现
+ * 处理属性验证和过渡动画集成
+ */
 function DialogFn<TTag extends ElementType = typeof DEFAULT_DIALOG_TAG>(
   props: DialogProps<TTag>,
   ref: Ref<HTMLElement>
@@ -409,20 +494,36 @@ function DialogFn<TTag extends ElementType = typeof DEFAULT_DIALOG_TAG>(
   )
 }
 
-// ---
+// --- 
 
+/**
+ * Panel(内容面板)组件默认标签
+ */
 let DEFAULT_PANEL_TAG = 'div' as const
+
+/**
+ * Panel渲染属性参数
+ */
 type PanelRenderPropArg = {
-  open: boolean
+  open: boolean  // 是否打开
 }
 
+/**
+ * Panel组件属性
+ */
 export type DialogPanelProps<TTag extends ElementType = typeof DEFAULT_PANEL_TAG> = Props<
   TTag,
   PanelRenderPropArg,
   never,
-  { transition?: boolean }
+  { 
+    transition?: boolean  // 是否启用过渡动画
+  }
 >
 
+/**
+ * Panel组件实现
+ * 提供内容面板容器,处理点击事件冒泡
+ */
 function PanelFn<TTag extends ElementType = typeof DEFAULT_PANEL_TAG>(
   props: DialogPanelProps<TTag>,
   ref: Ref<HTMLElement>
@@ -469,18 +570,34 @@ function PanelFn<TTag extends ElementType = typeof DEFAULT_PANEL_TAG>(
 
 // ---
 
+/**
+ * Backdrop(背景遮罩)组件默认标签
+ */
 let DEFAULT_BACKDROP_TAG = 'div' as const
+
+/**
+ * Backdrop渲染属性参数
+ */
 type BackdropRenderPropArg = {
-  open: boolean
+  open: boolean  // 是否打开
 }
 
+/**
+ * Backdrop组件属性
+ */
 export type DialogBackdropProps<TTag extends ElementType = typeof DEFAULT_BACKDROP_TAG> = Props<
   TTag,
   BackdropRenderPropArg,
   never,
-  { transition?: boolean }
+  { 
+    transition?: boolean  // 是否启用过渡动画
+  }
 >
 
+/**
+ * Backdrop组件实现
+ * 提供背景遮罩层
+ */
 function BackdropFn<TTag extends ElementType = typeof DEFAULT_BACKDROP_TAG>(
   props: DialogBackdropProps<TTag>,
   ref: Ref<HTMLElement>
@@ -515,16 +632,30 @@ function BackdropFn<TTag extends ElementType = typeof DEFAULT_BACKDROP_TAG>(
 
 // ---
 
+/**
+ * Title(标题)组件默认标签
+ */
 let DEFAULT_TITLE_TAG = 'h2' as const
+
+/**
+ * Title渲染属性参数
+ */
 type TitleRenderPropArg = {
-  open: boolean
+  open: boolean  // 是否打开
 }
 
+/**
+ * Title组件属性
+ */
 export type DialogTitleProps<TTag extends ElementType = typeof DEFAULT_TITLE_TAG> = Props<
   TTag,
   TitleRenderPropArg
 >
 
+/**
+ * Title组件实现
+ * 提供对话框标题,自动管理aria-labelledby
+ */
 function TitleFn<TTag extends ElementType = typeof DEFAULT_TITLE_TAG>(
   props: DialogTitleProps<TTag>,
   ref: Ref<HTMLElement>
@@ -560,6 +691,9 @@ function TitleFn<TTag extends ElementType = typeof DEFAULT_TITLE_TAG>(
 
 // ---
 
+/**
+ * 组件类型定义和导出
+ */
 export interface _internal_ComponentDialog extends HasDisplayName {
   <TTag extends ElementType = typeof DEFAULT_DIALOG_TAG>(
     props: DialogProps<TTag> & RefProp<typeof DialogFn>
@@ -586,6 +720,12 @@ export interface _internal_ComponentDialogTitle extends HasDisplayName {
 
 export interface _internal_ComponentDialogDescription extends _internal_ComponentDescription {}
 
+/**
+ * 最终导出
+ * 提供两种使用方式:
+ * 1. 分离组件: <Dialog>, <DialogPanel>, <DialogTitle>, <DialogDescription>
+ * 2. 命名空间(已废弃): <Dialog.Panel>, <Dialog.Title>, <Dialog.Description>
+ */
 let DialogRoot = forwardRefWithAs(DialogFn) as _internal_ComponentDialog
 export let DialogPanel = forwardRefWithAs(PanelFn) as _internal_ComponentDialogPanel
 export let DialogBackdrop = forwardRefWithAs(BackdropFn) as _internal_ComponentDialogBackdrop

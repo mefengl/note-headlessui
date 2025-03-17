@@ -1,3 +1,29 @@
+/**
+ * 组合框组件 - HeadlessUI中的高级搜索选择组件
+ * 
+ * 功能特点：
+ * 1. 支持单选和多选
+ * 2. 键盘导航和快捷操作
+ * 3. 实时搜索过滤
+ * 4. 虚拟滚动支持大数据
+ * 5. 完整的WAI-ARIA无障碍支持
+ * 6. 移动端友好
+ * 7. 表单集成
+ * 8. 完全可定制的样式
+ * 
+ * 核心子组件:
+ * - ComboboxInput: 输入框,用于搜索和显示选中值
+ * - ComboboxButton: 触发按钮,用于打开选项列表
+ * - ComboboxOptions: 选项列表容器
+ * - ComboboxOption: 单个选项
+ * 
+ * 使用场景:
+ * 1. 从大量选项中进行选择
+ * 2. 需要搜索过滤的选择器
+ * 3. 类似Select但需要更多交互的场景
+ * 4. 支持自定义选项的选择器
+ */
+
 'use client'
 
 import { useFocusRing } from '@react-aria/focus'
@@ -80,22 +106,46 @@ import { Label, useLabelledBy, useLabels, type _internal_ComponentLabel } from '
 import { MouseButton } from '../mouse'
 import { Portal } from '../portal/portal'
 
+/**
+ * 组合框状态枚举
+ * - Open: 选项列表展开
+ * - Closed: 选项列表收起
+ */
 enum ComboboxState {
   Open,
   Closed,
 }
 
+/**
+ * 值模式枚举
+ * - Single: 单选模式,一次只能选择一个值
+ * - Multi: 多选模式,可以同时选择多个值
+ */
 enum ValueMode {
   Single,
   Multi,
 }
 
+/**
+ * 激活触发方式枚举
+ * - Pointer: 通过鼠标/触摸等指针设备
+ * - Focus: 通过键盘焦点
+ * - Other: 其他方式(如编程触发)
+ */
 enum ActivationTrigger {
   Pointer,
   Focus,
   Other,
 }
 
+/**
+ * 选项数据引用类型
+ * 存储每个选项的关键信息:
+ * - disabled: 是否禁用
+ * - value: 选项的值
+ * - domRef: 选项DOM元素的引用
+ * - order: 排序索引(用于虚拟列表)
+ */
 type ComboboxOptionDataRef<T> = MutableRefObject<{
   disabled: boolean
   value: T
@@ -103,6 +153,20 @@ type ComboboxOptionDataRef<T> = MutableRefObject<{
   order: number | null
 }>
 
+/**
+ * 组合框状态定义
+ * 包含所有核心状态数据:
+ * - dataRef: 共享数据引用
+ * - virtual: 虚拟列表配置
+ * - comboboxState: 当前展开状态
+ * - options: 所有选项信息
+ * - activeOptionIndex: 当前激活项索引
+ * - activationTrigger: 激活触发方式
+ * - isTyping: 是否正在输入
+ * - inputElement: 输入框元素
+ * - buttonElement: 按钮元素
+ * - optionsElement: 选项列表元素
+ */
 interface StateDefinition<T> {
   dataRef: MutableRefObject<_Data | null>
 
@@ -123,6 +187,17 @@ interface StateDefinition<T> {
   __demoMode: boolean
 }
 
+/**
+ * 动作类型枚举
+ * 定义所有可能的状态更新动作:
+ * - OpenCombobox/CloseCombobox: 打开/关闭组合框
+ * - GoToOption: 导航到指定选项
+ * - SetTyping: 设置输入状态
+ * - RegisterOption/UnregisterOption: 注册/注销选项
+ * - SetActivationTrigger: 设置激活触发方式
+ * - UpdateVirtualConfiguration: 更新虚拟列表配置
+ * - Set*Element: 更新DOM元素引用
+ */
 enum ActionTypes {
   OpenCombobox,
   CloseCombobox,
@@ -474,6 +549,13 @@ type _Actions = ReturnType<typeof useActions>
 
 let VirtualContext = createContext<Virtualizer<any, any> | null>(null)
 
+/**
+ * 虚拟列表 Provider 组件
+ * 用于高效渲染大量选项:
+ * 1. 只渲染可视区域内的选项
+ * 2. 自动处理滚动位置
+ * 3. 维护正确的ARIA属性
+ */
 function VirtualProvider(props: {
   slot: OptionsRenderPropArg
   children: (data: { option: unknown; open: boolean }) => React.ReactElement
@@ -572,6 +654,18 @@ function VirtualProvider(props: {
   )
 }
 
+/**
+ * 组合框数据上下文
+ * 提供核心数据给子组件:
+ * - value: 当前选中值
+ * - defaultValue: 默认值
+ * - disabled: 是否禁用
+ * - mode: 单选/多选模式
+ * - virtual: 虚拟列表配置
+ * - activeOptionIndex: 当前激活项索引
+ * - compare: 值比较函数
+ * - isSelected: 选中状态判断函数
+ */
 let ComboboxDataContext = createContext<
   | ({
       value: unknown

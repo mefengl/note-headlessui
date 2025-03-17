@@ -1,3 +1,23 @@
+/**
+ * Menu组件 - HeadlessUI Vue版本的下拉菜单组件
+ * 
+ * 实现了WAI-ARIA Menu Button模式，提供完全无样式的可访问性菜单功能。
+ * 
+ * 主要特性：
+ * 1. 完整键盘导航支持
+ * 2. 搜索/筛选功能
+ * 3. 可访问性支持
+ * 4. 自动焦点管理
+ * 5. 外部点击关闭
+ * 6. 完全可定制的样式
+ * 
+ * 核心子组件：
+ * - Menu: 菜单容器
+ * - MenuButton: 触发按钮
+ * - MenuItems: 选项列表容器
+ * - MenuItem: 单个选项
+ */
+
 import {
   computed,
   defineComponent,
@@ -34,63 +54,97 @@ import {
 import { match } from '../../utils/match'
 import { Features, render } from '../../utils/render'
 
+/**
+ * 菜单状态枚举
+ */
 enum MenuStates {
-  Open,
-  Closed,
+  Open,    // 打开状态
+  Closed   // 关闭状态
 }
 
+/**
+ * 激活触发方式枚举
+ */
 enum ActivationTrigger {
-  Pointer,
-  Other,
+  Pointer,  // 通过指针设备(鼠标/触摸)
+  Other     // 其他方式(如键盘)
 }
 
+/**
+ * 工具函数：确保在下一帧执行回调
+ */
 function nextFrame(cb: () => void) {
   requestAnimationFrame(() => requestAnimationFrame(cb))
 }
 
+/**
+ * 菜单项数据类型
+ */
 type MenuItemData = {
-  textValue: string
-  disabled: boolean
-  domRef: Ref<HTMLElement | null>
+  textValue: string                 // 文本值(用于搜索)
+  disabled: boolean                 // 是否禁用
+  domRef: Ref<HTMLElement | null>   // DOM元素引用
 }
+
+/**
+ * 菜单状态定义
+ * 包含菜单所需的所有状态和方法
+ */
 type StateDefinition = {
-  // State
-  menuState: Ref<MenuStates>
-  buttonRef: Ref<HTMLButtonElement | null>
-  itemsRef: Ref<HTMLDivElement | null>
-  items: Ref<{ id: string; dataRef: ComputedRef<MenuItemData> }[]>
-  searchQuery: Ref<string>
-  activeItemIndex: Ref<number | null>
-  activationTrigger: Ref<ActivationTrigger>
+  // 状态数据
+  menuState: Ref<MenuStates>                  // 当前菜单状态
+  buttonRef: Ref<HTMLButtonElement | null>    // 按钮元素引用
+  itemsRef: Ref<HTMLDivElement | null>       // 选项列表容器引用
+  items: Ref<{ id: string; dataRef: ComputedRef<MenuItemData> }[]>  // 所有选项
+  searchQuery: Ref<string>                    // 搜索查询
+  activeItemIndex: Ref<number | null>         // 当前激活项索引
+  activationTrigger: Ref<ActivationTrigger>   // 激活触发方式
 
-  // State mutators
-  closeMenu(): void
-  openMenu(): void
-  goToItem(focus: Focus, id?: string, trigger?: ActivationTrigger): void
-  search(value: string): void
-  clearSearch(): void
-  registerItem(id: string, dataRef: ComputedRef<MenuItemData>): void
-  unregisterItem(id: string): void
+  // 状态操作方法
+  closeMenu(): void                           // 关闭菜单
+  openMenu(): void                            // 打开菜单
+  goToItem(focus: Focus, id?: string, trigger?: ActivationTrigger): void  // 切换选中项
+  search(value: string): void                 // 搜索选项
+  clearSearch(): void                         // 清除搜索
+  registerItem(id: string, dataRef: ComputedRef<MenuItemData>): void    // 注册选项
+  unregisterItem(id: string): void           // 注销选项
 }
 
+/**
+ * 菜单上下文
+ * 用于在组件树中共享菜单状态
+ */
 let MenuContext = Symbol('MenuContext') as InjectionKey<StateDefinition>
 
+/**
+ * 菜单上下文Hook
+ * 获取上下文数据,如果不在Menu内使用会抛出错误
+ */
 function useMenuContext(component: string) {
   let context = inject(MenuContext, null)
-
   if (context === null) {
     let err = new Error(`<${component} /> is missing a parent <Menu /> component.`)
     if (Error.captureStackTrace) Error.captureStackTrace(err, useMenuContext)
     throw err
   }
-
   return context
 }
 
+/**
+ * Menu组件实现
+ * 主要职责：
+ * 1. 状态管理
+ * 2. 键盘导航
+ * 3. 搜索功能
+ * 4. 选项管理
+ */
 export let Menu = defineComponent({
   name: 'Menu',
-  props: { as: { type: [Object, String], default: 'template' } },
+  props: { 
+    as: { type: [Object, String], default: 'template' }  // 渲染的HTML标签或组件
+  },
   setup(props, { slots, attrs }) {
+    // 初始化状态
     let menuState = ref<StateDefinition['menuState']['value']>(MenuStates.Closed)
     let buttonRef = ref<StateDefinition['buttonRef']['value']>(null)
     let itemsRef = ref<StateDefinition['itemsRef']['value']>(null)
@@ -101,6 +155,10 @@ export let Menu = defineComponent({
       ActivationTrigger.Other
     )
 
+    /**
+     * 调整选项顺序
+     * 处理选项的DOM顺序并维护正确的activeItemIndex
+     */
     function adjustOrderedState(
       adjustment: (
         items: UnwrapNestedRefs<StateDefinition['items']['value']>
@@ -113,13 +171,12 @@ export let Menu = defineComponent({
         dom(item.dataRef.domRef)
       )
 
-      // If we inserted an item before the current active item then the active item index
-      // would be wrong. To fix this, we will re-lookup the correct index.
+      // 如果在当前激活项之前插入了一个项，则激活项索引会错误。为了解决这个问题，我们将重新查找正确的索引。
       let adjustedActiveItemIndex = currentActiveItem
         ? sortedItems.indexOf(currentActiveItem)
         : null
 
-      // Reset to `null` in case the currentActiveItem was removed.
+      // 如果currentActiveItem被移除，则重置为`null`。
       if (adjustedActiveItemIndex === -1) {
         adjustedActiveItemIndex = null
       }
@@ -130,6 +187,7 @@ export let Menu = defineComponent({
       }
     }
 
+    // 组装API对象
     let api = {
       menuState,
       buttonRef,
@@ -209,7 +267,7 @@ export let Menu = defineComponent({
       },
     }
 
-    // Handle outside click
+    // 处理外部点击关闭
     useOutsideClick(
       [buttonRef, itemsRef],
       (event, target) => {
@@ -223,7 +281,7 @@ export let Menu = defineComponent({
       computed(() => menuState.value === MenuStates.Open)
     )
 
-    // @ts-expect-error Types of property 'dataRef' are incompatible.
+    // 提供上下文
     provide(MenuContext, api)
 
     useOpenClosedProvider(
@@ -242,18 +300,31 @@ export let Menu = defineComponent({
   },
 })
 
+/**
+ * MenuButton组件
+ * 菜单的触发按钮
+ * 
+ * 功能：
+ * 1. 切换菜单开关状态
+ * 2. 键盘快捷键支持
+ * 3. 可访问性支持
+ */
 export let MenuButton = defineComponent({
   name: 'MenuButton',
   props: {
-    disabled: { type: Boolean, default: false },
-    as: { type: [Object, String], default: 'button' },
-    id: { type: String, default: () => `headlessui-menu-button-${useId()}` },
+    disabled: { type: Boolean, default: false },   // 是否禁用
+    as: { type: [Object, String], default: 'button' }, // 渲染的HTML标签或组件
+    id: { type: String, default: () => `headlessui-menu-button-${useId()}` },  // 元素ID
   },
   setup(props, { attrs, slots, expose }) {
     let api = useMenuContext('MenuButton')
 
     expose({ el: api.buttonRef, $el: api.buttonRef })
 
+    /**
+     * 键盘事件处理
+     * 实现WAI-ARIA规范的键盘交互
+     */
     function handleKeyDown(event: KeyboardEvent) {
       switch (event.key) {
         // Ref: https://www.w3.org/WAI/ARIA/apg/patterns/menubutton/#keyboard-interaction-13
@@ -338,13 +409,23 @@ export let MenuButton = defineComponent({
   },
 })
 
+/**
+ * MenuItems组件
+ * 菜单选项的容器
+ * 
+ * 功能：
+ * 1. 键盘导航
+ * 2. 搜索支持
+ * 3. WAI-ARIA属性支持
+ * 4. 焦点管理
+ */
 export let MenuItems = defineComponent({
   name: 'MenuItems',
   props: {
-    as: { type: [Object, String], default: 'div' },
-    static: { type: Boolean, default: false },
-    unmount: { type: Boolean, default: true },
-    id: { type: String, default: () => `headlessui-menu-items-${useId()}` },
+    as: { type: [Object, String], default: 'div' },  // 渲染的HTML标签或组件
+    static: { type: Boolean, default: false },       // 是否始终渲染
+    unmount: { type: Boolean, default: true },      // 关闭时是否卸载
+    id: { type: String, default: () => `headlessui-menu-items-${useId()}` },  // 元素ID
   },
   setup(props, { attrs, slots, expose }) {
     let api = useMenuContext('MenuItems')
@@ -492,13 +573,23 @@ export let MenuItems = defineComponent({
   },
 })
 
+/**
+ * MenuItem组件
+ * 单个菜单选项
+ * 
+ * 功能：
+ * 1. 可禁用
+ * 2. 支持键盘和鼠标交互
+ * 3. 自动滚动到视图
+ * 4. WAI-ARIA属性支持
+ */
 export let MenuItem = defineComponent({
   name: 'MenuItem',
   inheritAttrs: false,
   props: {
-    as: { type: [Object, String], default: 'template' },
-    disabled: { type: Boolean, default: false },
-    id: { type: String, default: () => `headlessui-menu-item-${useId()}` },
+    as: { type: [Object, String], default: 'template' },  // 渲染的HTML标签或组件
+    disabled: { type: Boolean, default: false },         // 是否禁用
+    id: { type: String, default: () => `headlessui-menu-item-${useId()}` },  // 元素ID
   },
   setup(props, { slots, attrs, expose }) {
     let api = useMenuContext('MenuItem')

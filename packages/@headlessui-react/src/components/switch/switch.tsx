@@ -1,3 +1,30 @@
+/**
+ * Switch开关组件
+ * 一个无样式、可访问性强的开关切换组件
+ * 
+ * 主要功能和特点：
+ * 1. 支持受控和非受控两种使用模式
+ * 2. 完整的键盘操作支持(空格切换、回车提交)
+ * 3. 完整的WAI-ARIA属性支持
+ * 4. 支持表单集成
+ * 5. 支持禁用状态
+ * 6. 支持焦点管理
+ * 7. 支持Group分组使用
+ * 8. 支持自定义样式
+ * 
+ * 使用场景：
+ * 1. 开关切换设置
+ * 2. 表单中的布尔选项
+ * 3. 功能的启用/禁用控制
+ * 4. 主题切换等
+ * 
+ * 核心子组件：
+ * - Switch：主要开关按钮
+ * - Switch.Group：开关按钮组
+ * - Switch.Label：关联的标签
+ * - Switch.Description：关联的描述
+ */
+
 'use client'
 
 import { useFocusRing } from '@react-aria/focus'
@@ -46,17 +73,17 @@ import { Keys } from '../keyboard'
 import { Label, useLabelledBy, useLabels, type _internal_ComponentLabel } from '../label/label'
 
 /**
- * Switch 组件的状态定义
- * 用于在 Switch.Group 中共享组件状态
+ * Switch组件状态定义接口
+ * 用于在Switch.Group中共享Switch实例的状态
  */
 interface StateDefinition {
-  switch: HTMLButtonElement | null        // 开关按钮元素引用
-  setSwitch(element: HTMLButtonElement): void  // 设置开关按钮的方法
+  switch: HTMLButtonElement | null         // Switch按钮元素引用
+  setSwitch(element: HTMLButtonElement): void  // 设置Switch按钮引用的方法
 }
 
 /**
- * Switch Group上下文
- * 用于在 Switch.Group 中共享状态
+ * Switch.Group上下文
+ * 用于在组件树中共享Switch状态
  */
 let GroupContext = createContext<StateDefinition | null>(null)
 GroupContext.displayName = 'GroupContext'
@@ -64,27 +91,30 @@ GroupContext.displayName = 'GroupContext'
 // ---
 
 /**
- * Switch.Group的默认标签
+ * Switch.Group的默认渲染标签
+ * 使用Fragment作为默认容器,不引入额外的DOM节点
  */
 let DEFAULT_GROUP_TAG = Fragment
 
 /**
- * Switch.Group的属性类型定义
+ * Switch.Group组件属性类型定义
  */
 export type SwitchGroupProps<TTag extends ElementType = typeof DEFAULT_GROUP_TAG> = Props<TTag>
 
 /**
  * Switch.Group组件实现
- * 提供开关组上下文,管理Label和Description的关联
+ * 提供以下功能:
+ * 1. 管理Switch实例的状态
+ * 2. 提供Label和Description的关联
+ * 3. 处理Label的点击事件
  */
 function GroupFn<TTag extends ElementType = typeof DEFAULT_GROUP_TAG>(
   props: SwitchGroupProps<TTag>
 ) {
-  let [switchElement, setSwitchElement] = useState<HTMLButtonElement | null>(null)  // 存储Switch实例
-  let [labelledby, LabelProvider] = useLabels()  // Label关联
-  let [describedby, DescriptionProvider] = useDescriptions()  // Description关联
+  let [switchElement, setSwitchElement] = useState<HTMLButtonElement | null>(null)
+  let [labelledby, LabelProvider] = useLabels()
+  let [describedby, DescriptionProvider] = useDescriptions()
 
-  // 创建上下文值
   let context = useMemo<StateDefinition>(
     () => ({ switch: switchElement, setSwitch: setSwitchElement }),
     [switchElement, setSwitchElement]
@@ -102,7 +132,6 @@ function GroupFn<TTag extends ElementType = typeof DEFAULT_GROUP_TAG>(
         value={labelledby}
         props={{
           htmlFor: context.switch?.id,
-          // 处理Label点击事件
           onClick(event: React.MouseEvent<HTMLLabelElement>) {
             if (!switchElement) return
             if (event.currentTarget instanceof HTMLLabelElement) {
@@ -130,32 +159,37 @@ function GroupFn<TTag extends ElementType = typeof DEFAULT_GROUP_TAG>(
 // ---
 
 /**
- * Switch组件的默认标签
+ * Switch的默认渲染标签
+ * 使用button作为开关按钮
  */
 let DEFAULT_SWITCH_TAG = 'button' as const
 
 /**
  * Switch渲染属性参数
- * 包含开关的各种状态信息
+ * 包含组件的各种状态信息供样式定制使用
  */
 type SwitchRenderPropArg = {
   checked: boolean      // 是否选中
-  hover: boolean       // 是否悬停
-  focus: boolean       // 是否聚焦
-  active: boolean      // 是否激活
-  autofocus: boolean   // 是否自动聚焦
-  changing: boolean    // 是否正在变化
+  hover: boolean       // 是否处于悬停状态
+  focus: boolean       // 是否处于焦点状态
+  active: boolean      // 是否处于激活状态
+  autofocus: boolean   // 是否自动获得焦点
+  changing: boolean    // 是否正在切换状态中
   disabled: boolean    // 是否禁用
 }
 
 /**
- * Switch组件我们控制的aria属性
+ * Switch组件需要控制的ARIA属性
+ * 用于提供完整的可访问性支持
  */
-type SwitchPropsWeControl = 'aria-checked' | 'aria-describedby' | 'aria-labelledby' | 'role'
+type SwitchPropsWeControl = 
+  | 'aria-checked'     // 开关状态
+  | 'aria-describedby' // 描述文本ID
+  | 'aria-labelledby'  // 标签文本ID
+  | 'role'            // ARIA角色
 
 /**
  * Switch组件属性类型定义
- * 支持受控和非受控模式
  */
 export type SwitchProps<TTag extends ElementType = typeof DEFAULT_SWITCH_TAG> = Props<
   TTag,
@@ -175,24 +209,30 @@ export type SwitchProps<TTag extends ElementType = typeof DEFAULT_SWITCH_TAG> = 
 >
 
 /**
- * Switch 开关组件核心实现
- * 主要功能:
- * 1. 支持受控和非受控两种模式
- * 2. 集成表单支持
- * 3. 支持键盘操作
- * 4. 完整的可访问性支持
- * 5. 支持在 Group 中使用
+ * Switch组件核心实现
+ * 
+ * 实现细节：
+ * 1. 状态管理：
+ *    - 使用useControllable实现受控/非受控模式
+ *    - 使用useState管理动画状态
+ * 2. 事件处理：
+ *    - 处理点击事件
+ *    - 处理键盘事件(空格切换、回车提交)
+ * 3. 可访问性：
+ *    - 完整的ARIA属性支持
+ *    - 键盘操作支持
+ * 4. 表单集成：
+ *    - 支持表单提交和重置
+ *    - 支持自定义表单关联
  */
 function SwitchFn<TTag extends ElementType = typeof DEFAULT_SWITCH_TAG>(
   props: SwitchProps<TTag>,
   ref: Ref<HTMLButtonElement>
 ) {
-  // ID管理
   let internalId = useId()
   let providedId = useProvidedId()
   let providedDisabled = useDisabled()
   
-  // 属性处理
   let {
     id = providedId || `headlessui-switch-${internalId}`,
     disabled = providedDisabled || false,
@@ -206,7 +246,6 @@ function SwitchFn<TTag extends ElementType = typeof DEFAULT_SWITCH_TAG>(
     ...theirProps
   } = props
 
-  // 获取 Group 上下文
   let groupContext = useContext(GroupContext)
 
   // 元素引用管理
@@ -227,7 +266,7 @@ function SwitchFn<TTag extends ElementType = typeof DEFAULT_SWITCH_TAG>(
     defaultChecked ?? false
   )
 
-  // 处理动画状态
+  // 动画状态管理
   let d = useDisposables()
   let [changing, setChanging] = useState(false)
   let toggle = useEvent(() => {
@@ -254,14 +293,13 @@ function SwitchFn<TTag extends ElementType = typeof DEFAULT_SWITCH_TAG>(
     }
   })
 
-  // 处理按键事件,阻止默认行为
   let handleKeyPress = useEvent((event: ReactKeyboardEvent<HTMLElement>) => event.preventDefault())
 
-  // 可访问性配置
+  // 可访问性支持
   let labelledBy = useLabelledBy()
   let describedBy = useDescribedBy()
 
-  // 处理交互状态
+  // 交互状态管理
   let { isFocusVisible: focus, focusProps } = useFocusRing({ autoFocus })
   let { isHovered: hover, hoverProps } = useHover({ isDisabled: disabled })
   let { pressed: active, pressProps } = useActivePress({ disabled })
@@ -279,7 +317,7 @@ function SwitchFn<TTag extends ElementType = typeof DEFAULT_SWITCH_TAG>(
     } satisfies SwitchRenderPropArg
   }, [checked, hover, focus, active, disabled, changing, autoFocus])
 
-  // 合并组件属性
+  // 合并最终属性
   let ourProps = mergeProps(
     {
       id,
@@ -301,7 +339,7 @@ function SwitchFn<TTag extends ElementType = typeof DEFAULT_SWITCH_TAG>(
     pressProps
   )
 
-  // 处理表单重置
+  // 表单重置处理
   let reset = useCallback(() => {
     if (defaultChecked === undefined) return
     return onChange?.(defaultChecked)
@@ -311,7 +349,6 @@ function SwitchFn<TTag extends ElementType = typeof DEFAULT_SWITCH_TAG>(
 
   return (
     <>
-      {/* 表单集成支持 */}
       {name != null && (
         <FormFields
           disabled={disabled}
@@ -328,6 +365,9 @@ function SwitchFn<TTag extends ElementType = typeof DEFAULT_SWITCH_TAG>(
 
 // ---
 
+/**
+ * 组件类型定义
+ */
 export interface _internal_ComponentSwitch extends HasDisplayName {
   <TTag extends ElementType = typeof DEFAULT_SWITCH_TAG>(
     props: SwitchProps<TTag> & RefProp<typeof SwitchFn>
@@ -344,10 +384,13 @@ export interface _internal_ComponentSwitchLabel extends _internal_ComponentLabel
 export interface _internal_ComponentSwitchDescription extends _internal_ComponentDescription {}
 
 let SwitchRoot = forwardRefWithAs(SwitchFn) as _internal_ComponentSwitch
+
 /** @deprecated use `<Field>` instead of `<SwitchGroup>` */
 export let SwitchGroup = GroupFn as _internal_ComponentSwitchGroup
+
 /** @deprecated use `<Label>` instead of `<SwitchLabel>` */
 export let SwitchLabel = Label as _internal_ComponentSwitchLabel
+
 /** @deprecated use `<Description>` instead of `<SwitchDescription>` */
 export let SwitchDescription = Description as _internal_ComponentSwitchDescription
 
